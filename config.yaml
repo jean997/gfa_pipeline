@@ -1,0 +1,31 @@
+# sum_stats is a csv file
+input:
+    sum_stats: "2021-09-01_lipids.csv"
+    neale_var_ref: "/project2/compbio/gwas_summary_statistics/ukbbneale_2018/variants.tsv.bgz"
+
+analysis:
+    ldprune:
+        r2_thresh: 0.01
+        ld_seed: [0]
+        clump_kb: [10000]
+        ref_path: "/project2/compbio/LD/plink_reference/EUR"
+    gfa:
+        kmax: 100
+        max_snp: "Inf" 
+        nprefit: [0, 3]
+        min_var_ratio: 0.3 
+        fit_method: ["ext", "seq"]
+        maxiter: 1000
+        method: ["ff-1"]
+        est_L: FALSE
+        gfa_seed: [1]
+        R: 
+            type: ["ldsc", "pt"]
+            pthresh: [0.2, 0.05]
+            l2_dir: "/project2/xinhe/ldsc_reference_files/eur_w_ld_chr/"
+
+out:
+    data_dir: "data/"
+    formatted_gwas_dir: "/project2/compbio/gwas_summary_statistics/standard_formats/ss_factors/"
+    output_dir: "results/"
+

@@ -1,0 +1,24 @@
+__default__:
+    mem: "5G"
+    cpus: "1"
+    name: "{rule}-{wildcards}"
+    log: "log/snake-{rule}-{wildcards}"
+    time: "2:00:00"
+
+format:
+    mem: "30G"
+
+snp_table_chrom:
+    mem: "20G"
+
+ld_prune_plink:
+    mem: "10G"
+    time:  "1:00:00"
+
+run_flash1:
+    mem: "20G"
+    time: "1-00:00:00"
+
+run_flash2:
+    mem: "20G"
+    time: "1-00:00:00"
