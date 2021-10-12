@@ -4,27 +4,63 @@ input:
     neale_var_ref: "/project2/compbio/gwas_summary_statistics/ukbbneale_2018/variants.tsv.bgz"
 
 analysis:
+    # LD pruning options:
+    # r2_thresh: threshold for pairwise r^2 between variants
+    # clump_kb Maximum distance for pruning.
+    # ref_path Path to plink format reference data
+    ldprune:
+        r2_thresh: 0.01
+        ld_seed: [0]
+        clump_kb: [10000]
+        ref_path: "/nfs/turbo/sph-jvmorr/ld_reference_files/1kg_plink/EUR"
+    # GFA options:
+    # kmax: Maximum number of factors to add
+    # max_snp: Maixmum number of snps to use
+    # nprefit: Number of prefits. Currently should be 0, a development feature.
+    # min_var_ratio: Dosn't matter if nprefit is 0.
+    # method: A list that can contain "ext", "seq" or both. Specifies backfitting method used by flashier. ext is much faster.
+    # method: A list which can contain ff-x where x is a number between 0 and 1 and "plain". For plain, the pipeline will fit without the correction for sample overlap. For ff-x, the pipeline will fit with the correction. If x is less than 1, only the top eigenvectors of R corresponding to the top x% of variance will be kept.
+    # est_L: currently unused
+    # gfa_seed: Seed for GFA
+    # R: Specifies options for how correlation is estimated. Type can be either "ldsc" or "pt" for the p-threshold method. LDSC is likely better. pthresh specifies the threshold for the p-threshold method. l2_dir gives the location of ld scores, required if using method "ldsc".
     ldprune:
         r2_thresh: 0.01
         ld_seed: [0]
         clump_kb: [10000]
         ref_path: "/project2/compbio/LD/plink_reference/EUR"
+        # GFA options:
+    # kmax: Maximum number of factors to add
+    # max_snp: Maixmum number of snps to use
+    # nprefit: Number of prefits. Currently should be 0, a development feature.
+    # min_var_ratio: Dosn't matter if nprefit is 0.
+    # method: A list that can contain "ext", "seq" or both. Specifies backfitting method used by flashier. ext is much faster.
+    # method: A list which can contain ff-x where x is a number between 0 and 1 and "plain". For plain, the pipeline will fit without the correction for sample overlap. For ff-x, the pipeline will fit with the correction. If x is less than 1, only the top eigenvectors of R corresponding to the top x% of variance will be kept.
+    # est_L: currently unused
+    # gfa_seed: Seed for GFA
+    # R: Specifies options for how correlation is estimated.
+    # Type can be either "ldsc" or "pt" for the p-threshold method. LDSC is likely better.
+    # pthresh specifies the threshold for the p-threshold method.
+    # l2_dir gives the location of ld scores, required if using method "ldsc".
     gfa:
         kmax: 100
-        max_snp: "Inf" 
+        max_snp: "Inf"
         nprefit: [0, 3]
-        min_var_ratio: 0.3 
+        min_var_ratio: 0.3
         fit_method: ["ext", "seq"]
         maxiter: 1000
         method: ["ff-1"]
         est_L: FALSE
         gfa_seed: [1]
-        R: 
+        R:
             type: ["ldsc", "pt"]
             pthresh: [0.2, 0.05]
             l2_dir: "/project2/xinhe/ldsc_reference_files/eur_w_ld_chr/"
 
 out:
+    # Output data options:
+    # data_dir: Directory to store reformatted data
+    # formatted_gwas_dir: Where do store formatted gwas data
+    # output_dir: Where to store results
     data_dir: "data/"
     formatted_gwas_dir: "/project2/compbio/gwas_summary_statistics/standard_formats/ss_factors/"
     output_dir: "results/"
