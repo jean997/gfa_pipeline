@@ -76,19 +76,30 @@ new_names <- R$names
 
 
 if(type == "plain"){
-        f <- fit_ff_prefit(Z_hat = Z_hat, kmax = kmax, 
-                           num_prefits = n_prefit, min_var_ratio = min_var_ratio, 
+        f <- fit_ff_prefit(Z_hat = Z_hat, kmax = kmax,
+                           num_prefits = n_prefit, min_var_ratio = min_var_ratio,
                            method = fit_method, max_final_iter = maxiter,
-                           max_ev_percent = max_ev)
+                           max_lr_percent = max_ev)
 }else if(type == "ff"){
-        f <- fit_ff_prefit(Z_hat = Z_hat,R = R$R, kmax = kmax, 
-                           num_prefits = n_prefit, min_var_ratio = min_var_ratio, 
+        f <- fit_ff_prefit(Z_hat = Z_hat,R = R$R, kmax = kmax,
+                           num_prefits = n_prefit, min_var_ratio = min_var_ratio,
                            method = fit_method, max_final_iter = maxiter,
-                           max_ev_percent = max_ev)
+                           max_lr_percent = max_ev)
 }
 
 f$snps <- snps
 f$names <- new_names
+
+
+if(!is.null(f$fit$flash.fit$maxiter.reached)){
+    done <- FALSE
+    i <- 1
+    while(!done){
+        saveRDS(f, file = paste0(out, ".temp", i))
+        refit <- gfa_rebackfit(f$fit, f$fixed_ix, method = method, maxiter = maxiter)
+        if(is.null(refit$fit$flash.fit$maxiter.reached)) done <- TRUE
+    }
+}
 
 saveRDS(f, file=out)
 
