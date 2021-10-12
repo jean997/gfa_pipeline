@@ -33,36 +33,36 @@ prefix = config["input"]["sum_stats"].replace(".csv", "") +  "_"
 
 est_L = config["analysis"]["gfa"]["est_L"]
 
-gfa_strings = expand("{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{s}", 
-                     m = config["analysis"]["gfa"]["method"], 
-                     k = config["analysis"]["gfa"]["kmax"], 
-                     ms = config["analysis"]["gfa"]["max_snp"], 
-                     np = config["analysis"]["gfa"]["nprefit"], 
-                     mvr = config["analysis"]["gfa"]["min_var_ratio"], 
-                     fm = config["analysis"]["gfa"]["fit_method"], 
+gfa_strings = expand("{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{s}",
+                     m = config["analysis"]["gfa"]["method"],
+                     k = config["analysis"]["gfa"]["kmax"],
+                     ms = config["analysis"]["gfa"]["max_snp"],
+                     np = config["analysis"]["gfa"]["nprefit"],
+                     mvr = config["analysis"]["gfa"]["min_var_ratio"],
+                     fm = config["analysis"]["gfa"]["fit_method"],
                      maxiter = config["analysis"]["gfa"]["maxiter"],
-                     s = config["analysis"]["gfa"]["gfa_seed"]) 
+                     s = config["analysis"]["gfa"]["gfa_seed"])
 
-ld_strings = expand("r2{r2}_kb{kb}_seed{s}", 
+ld_strings = expand("r2{r2}_kb{kb}_seed{s}",
                     r2 = config["analysis"]["ldprune"]["r2_thresh"],
                     kb = config["analysis"]["ldprune"]["clump_kb"],
                     s = config["analysis"]["ldprune"]["ld_seed"])
 
 if "pt" in config["analysis"]["gfa"]["R"]["type"]:
     R_strings = expand("pt{pt}", pt = config["analysis"]["gfa"]["R"]["pthresh"])
-else: 
+else:
     R_strings = []
 if "ldsc" in config["analysis"]["gfa"]["R"]["type"]:
     R_strings.append("ldsc")
 
 
-inp = expand(out_dir + prefix + "fit_{gfas}.ldpruned_{lds}.R_{rs}.RDS", 
-                gfas = gfa_strings, 
-                lds = ld_strings, 
-                rs = R_strings) 
+inp = expand(out_dir + prefix + "fit_{gfas}.ldpruned_{lds}.R_{rs}.RDS",
+                gfas = gfa_strings,
+                lds = ld_strings,
+                rs = R_strings)
 
 #inp = expand(data_dir + prefix + "R_estimate.ldpruned_{lds}.R_pt{pt}.RDS",
-#                lds = ld_strings, 
+#                lds = ld_strings,
 #                pt = config["analysis"]["R_pthresh"])
 
 rule all:
@@ -121,45 +121,47 @@ rule subset_zmat:
 ## Estimate R
 rule score_summ:
     input: normbeta =  data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_seed{s}.{chrom}.RDS"
-    output: summ =  data_dir + prefix + "zmat_summary.ldpruned_r2{r2_thresh}_kb{kb}_seed{s}.R_pt{pt}.{chrom}.RDS", 
+    output: summ =  data_dir + prefix + "zmat_summary.ldpruned_r2{r2_thresh}_kb{kb}_seed{s}.R_pt{pt}.{chrom}.RDS",
     wildcard_constraints: chrom = "\d+"
     shell: 'Rscript R/3_compute_summary.R {input.normbeta} {wildcards.pt} {output.summ}'
 
 l2_dir = config["analysis"]["gfa"]["R"]["l2_dir"]
 rule score_summ_ldsc:
-    input: normbeta =  data_dir + prefix + "zmat.{chrom}.RDS", 
+    input: normbeta =  data_dir + prefix + "zmat.{chrom}.RDS",
            l2 = l2_dir + "{chrom}.l2.ldscore.gz"
-    output: summ =  data_dir + prefix + "zmat_ldsc_summary.{chrom}.RDS", 
+    output: summ =  data_dir + prefix + "zmat_ldsc_summary.{chrom}.RDS",
     wildcard_constraints: chrom = "\d+"
     shell: 'Rscript R/3_compute_ldsc_summary.R {input.normbeta} {input.l2} {output.summ}'
 
 # Compute R from the per chromosome summaries
 rule summ_to_cor:
-    input: expand(data_dir + prefix + "zmat_summary.ldpruned_r2{{r2_thresh}}_kb{{kb}}_seed{{s}}.R_pt{{pt}}.{chrom}.RDS", chrom = range(1, 23)) 
+    input: expand(data_dir + prefix + "zmat_summary.ldpruned_r2{{r2_thresh}}_kb{{kb}}_seed{{s}}.R_pt{{pt}}.{chrom}.RDS", chrom = range(1, 23))
     output: out = data_dir + prefix + "R_estimate.ldpruned_r2{r2_thresh}_kb{kb}_seed{s}.R_pt{pt}.RDS"
     shell: "Rscript R/4_summary_to_cor.R  {output.out} {input}"
 
 rule summ_to_ldsc_cov:
-    input: expand(data_dir + prefix + "zmat_ldsc_summary.{chrom}.RDS", chrom = range(1, 23)) 
+    input: expand(data_dir + prefix + "zmat_ldsc_summary.{chrom}.RDS", chrom = range(1, 23))
     output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
     shell: "Rscript R/4_ldsc_summ_to_cor.R  {output.out} {input}"
 
 # Run flash
 #
 
+# With p-thresh R
 rule run_flash1:
     input: NB = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_seed{{ls}}.{chrom}.RDS", chrom = range(1, 23)),
            R = data_dir + prefix + "R_estimate.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_pt{pt}.RDS"
-    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_pt{pt}.RDS", 
+    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_pt{pt}.RDS",
     shell: 'Rscript R/5_run_flash_prefit.R {output.out} {input.R}  {wildcards.m} \
             {wildcards.k} {wildcards.ms} {wildcards.np} {wildcards.mvr} \
             {wildcards.fm} {wildcards.maxiter} {wildcards.fs} {input.NB}'
 
 
+# With LDSC R
 rule run_flash2:
     input: NB = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_seed{{ls}}.{chrom}.RDS", chrom = range(1, 23)),
            R = data_dir + prefix + "R_estimate.R_ldsc.RDS"
-    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_ldsc.RDS", 
+    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_ldsc.RDS",
     shell: 'Rscript R/5_run_flash_prefit.R {output.out} {input.R}  {wildcards.m} \
             {wildcards.k} {wildcards.ms} {wildcards.np} {wildcards.mvr} \
             {wildcards.fm} {wildcards.maxiter} {wildcards.fs} {input.NB}'
