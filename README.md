@@ -80,6 +80,7 @@ You will need to following R packages. You may already have some of these instal
 - `gwasvcf`: Install with `devtools::install_github("mrcieu/gwasvcf")`
 - `ieugwasr`: Install with `devtools::install_github("mrcieu/ieugwasr")`
 - `stringr`: Install with `install.packages`
+- `magrittr`: Install with `install.packages`
 - `LaplacesDemon`: Install with `install.packages`. 
 - `VariantAnnotation`: Installed from bioconductor using instructions [here](https://bioconductor.org/packages/release/bioc/html/VariantAnnotation.html).
 
@@ -107,7 +108,7 @@ rm -r gfa_pipeline
 ### Create a csv file with all the studies you want to analyze. 
 
 You should be able to base your csv file on the `gwas_reference.csv` file that tracks all of our data. The pipeline is picky about 
-column headers (titles) but not about the order of columns. The following columns are required. Column names below are followed by indicators: (r) means the column must not be NA for any row. (\*) means that NA values are allowed for any row. (\**) means that NA values 
+column names but not about the order of columns. The following columns are required. Column names below are followed by indicators: (r) means the column must not be NA for any row. (\*) means that NA values are allowed for any row. (\**) means that NA values 
 are only allowed if the data is a vcf file from the IEU open GWAS project. Since these data are read in by R, NA is the preferred way to indicate missing data (as opposed to leaving a blank cell). 
 
 - name (r): A unique name for the study (you can use `Unique_ID` from the gwas_reference.csv file).
