@@ -4,7 +4,7 @@ library(sumstatFactors)
 library(VariantAnnotation)
 library(gwasvcf)
 library(dplyr)
-
+library(magrittr)
 
 args <- commandArgs(trailingOnly=TRUE)
 data_file <- args[1]
@@ -26,12 +26,12 @@ cat(args[13], "\n")
 cat(neale_format, "\n")
 
 if(neale_format){
-    var_col_string <- "cols_only(variant='c', chr = 'c', pos = 'd', ref = 'c', alt = 'c', rsid = 'c', info = 'd', AF = 'd')" 
+    var_col_string <- "cols_only(variant='c', chr = 'c', pos = 'd', ref = 'c', alt = 'c', rsid = 'c', info = 'd', AF = 'd')"
     var_ref <- read_tsv(neale_var_ref, col_types = eval(parse(text = var_col_string)))
     var_ref <- var_ref %>%
                filter(info > 0.9 & AF > 0.01 & AF < 0.99) %>%
                select(variant, chr, pos, ref, alt, rsid)
-    X <- read_tsv(data_file) 
+    X <- read_tsv(data_file)
     X <- right_join(X, var_ref, by= "variant")
     snp_name <- "rsid"
     beta_hat_name <- "beta"
@@ -79,7 +79,8 @@ if(neale_format){
     dat <- dat1 %>%
            mutate(AF = case_when(ES == -1*dat$ES ~ 1-AF,
                                  TRUE ~ AF)) %>%
-           rename(ALT = A1, REF = A2)
+           rename(ALT = A1, REF = A2) %>%
+           filter(!is.na(ID))
     out <- dat %$% create_vcf( chrom=seqnames, pos=start,  nea=REF,
                       ea=ALT, snp=ID, ea_af=AF,
                       effect=ES,  se=SE, pval=10^-LP, n=SS, name="a")
