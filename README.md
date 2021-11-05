@@ -44,7 +44,7 @@ python --version
 which python
 ```
 
-Should be `~/miniforge3/bin/python`. 
+Should be `~/mambaforge/bin/python`. 
 
 You now no longer need to use `module load python` to have access to python 3.9.
 
@@ -71,6 +71,20 @@ Last note: In order for the GWAS file tracker to still work, you need to install
 ```
 mamba install wget pyyaml
 ```
+
+### Step 3 Install Some necessary R packages
+
+You will need to following R packages. You may already have some of these installed. You can check using `library`. These install best if you *first deactivate the base conda environment*. Then start R, install any necessary packages. You can then reactivate the base environment and should not have issues. This primarily applies to the `gwasvcf` and `VariantAnnotation` packages. 
+
+- `sumstatFactors`: Install using `devtools::install_github("jean997/sumstatFactors")`
+- `gwasvcf`: Install with `devtools::install_github("mrcieu/gwasvcf")`
+- `ieugwasr`: Install with `devtools::install_github("mrcieu/ieugwasr")`
+- `stringr`: Install with `install.packages`
+- `LaplacesDemon`: Install with `install.packages`. 
+- `VariantAnnotation`: Installed from bioconductor using instructions [here](https://bioconductor.org/packages/release/bioc/html/VariantAnnotation.html).
+
+
+
 
 That's it. Installation done. 
 
