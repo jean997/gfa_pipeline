@@ -97,7 +97,7 @@ column headers (titles) but not about the order of columns. The following column
 are only allowed if the data is a vcf file from the IEU open GWAS project. Since these data are read in by R, NA is the preferred way to indicate missing data (as opposed to leaving a blank cell). 
 
 - name (r): A unique name for the study (you can use `Unique_ID` from the gwas_reference.csv file).
-- raw_data_path (r): Path to the raw data file (`url` in `gwas_reference.csv`).
+- raw_data_path (r): Path to the raw data file (`file` in `gwas_reference.csv`).
 - pub_sample_size (*): The sample size as stated in the publication or report about the study. 
 - snp (**): Column name for rsid
 - A1 (**): Column name for effect allele
@@ -110,6 +110,9 @@ are only allowed if the data is a vcf file from the IEU open GWAS project. Since
 - sample_size (*): Column name for per-SNP sample size (note optional)
 - neale_format (r): This column should contain `FALSE` unless the data are GWAS round 2 results from [here](http://www.nealelab.is/uk-biobank). These files have a different enough format that I had to write a separate parser for them. 
 - effect_is_or (r): This value should be "yes" or "no". If yes, this indicates that the value in the beta column is an odds ratio rather than a log odds ratio. 
+
+
+Note that the file paths in `gwas_reference.csv` are relative paths and the pipeline needs absolute paths. This means you will need to add `/nfs/turbo/sph-jvmorr/gwas_summary_statistics/` to the beginning of each path. 
 
 #### Data from IEU Open GWAS project
 
@@ -148,3 +151,7 @@ gzip -cd myfile.tsv.gz | head
 This will print the first ten lines of the file. Note that it is important to get the efffect and alternate allele columns correct. Sometimes this is easy to figure out because they are called something like "effect_allele" and "other_allele". Sometimes it is more ambiguous and you may need to check any documentation with the file carefully. If columns are called "A1" and "A2" it is almost always the case that A1 is the effect allel and A2 is the non-effect allele. However, it is still good to check this. 
 
 Not all files are usable as they are distributed. For the pipeline to work, we need columns corresponding to rs ID (snp name beginning with "rs"), effect and alternate allele, regression coefficient estimate (beta), and standard error. The vast majority of studies include this information. However, if any of these are missing, you will need to process the file in some way to get it into a usable format. You may not be able to make all formats usable. 
+
+### Editing the config file
+
+At a minimum, you will need to edit the config file so that your csv file is shown on the line for `sum_stats:` in the input section. You may want to modify other options. I suggest leaving all the options that provide file paths as they are (unless you need to change the ancestry of the LD reference files). 

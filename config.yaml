@@ -1,7 +1,8 @@
 # sum_stats is a csv file
+# neale_var_ref is only required if using files from the Neale lab round 2 2018 analysis
 input:
     sum_stats: "2021-09-01_lipdplus.csv"
-    neale_var_ref: "/project2/compbio/gwas_summary_statistics/ukbbneale_2018/variants.tsv.bgz"
+    neale_var_ref: "/nfs/turbo/sph-jvmorr/gwas_summary_statistics/NealeRound2_2018/variants.tsv.bgz"
 
 analysis:
     # LD pruning options:
@@ -34,7 +35,7 @@ analysis:
         est_L: FALSE
         gfa_seed: [1]
         R:
-            type: ["ldsc", "pt"]
+            type: ["ldsc"]
             pthresh: [0.2, 0.05]
             l2_dir: "/nfs/turbo/sph-jvmorr/ldsc_reference_files/eur_w_ld_chr/"
 
