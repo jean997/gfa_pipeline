@@ -155,3 +155,46 @@ Not all files are usable as they are distributed. For the pipeline to work, we n
 ### Editing the config file
 
 At a minimum, you will need to edit the config file so that your csv file is shown on the line for `sum_stats:` in the input section. You may want to modify other options. I suggest leaving all the options that provide file paths as they are (unless you need to change the ancestry of the LD reference files). 
+
+
+### Running the pipeline on Great Lakes
+
+Once you have the config file edited to your liking, the pipeline is run using the `run-snakemake.sh` script. It is ok to run this script on the head node. However, I find it more convenient and reliable to run it from a compute node. I will show my favorite way to get this started below and then some other options. 
+
+#### Starting the pipeline from an interactive session
+
+First start an interactive session using the `screen` command. `screen` makes is to that you can detatch from your terminal without ending the process:
+
+```
+screen salloc --account=jvmorr0 --mem 5G --time 4-00:00:00
+```
+
+In this command `screen` starts a screen session. `salloc` starts an interactive session on one of the great lakes compute nodes. The options are options to `salloc` which request 5G of memory, 4 days of running time, and uses the account `jvmorr0`. 
+
+After you execute this you will be in an interactive session on a compute node. Look at the name on the command line if you aren't sure if you are on a compute node or the head node. You now need to load the R module which the pipeline will need. 
+
+```
+module load R
+```
+
+Now you can run the pipeline 
+
+```
+nohup ./run-snakemake.sh & 
+```
+
+Using `nohup` and `&` will make it so that the commad line returns and all of the snakemake output is captured in a file called `nohup.out` which is useful if you want to check on the progress. 
+You can now detatch the screen session and go do something else. To do this, type 
+
+```
+Ctrl+a d
+```
+ (Hold down control, type a, release both keys, type d)
+ 
+ If you later want to resume the session, type 
+ 
+ ```
+ screen -r
+ ```
+
+If you want to kill the entire session, use `sequeue -u <username>` to find the job number of the interactive session and use `scancel <jobnumber>` to kill it. You can also resume the session and type `exit` which will terminate the interactive session. 
