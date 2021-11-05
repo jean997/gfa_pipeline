@@ -1,4 +1,4 @@
-library(tidyverse)
+library(dplyr)
 library(ieugwasr)
 
 args <- commandArgs(trailingOnly=TRUE)
@@ -9,24 +9,24 @@ ref_path  <- args[4]
 out_nm <- args[5]
 seed <- args[6]
 
-nmiss <- nmiss %>% 
+nmiss <- nmiss %>%
          filter(miss == 0 ) %>%
          rename(rsid = snp)
 
 
 if(seed == 0){
-    nmiss <- nmiss %>% 
+    nmiss <- nmiss %>%
          mutate(pval = 0.5)
 }else{
     set.seed(seed)
     nmiss$pval <- runif(n = nrow(nmiss))
 }
 
-nm_clump <- ld_clump(dat = nmiss, 
-                     clump_r2 = r2_thresh, 
-                     clump_p = 1, 
+nm_clump <- ld_clump(dat = nmiss,
+                     clump_r2 = r2_thresh,
+                     clump_p = 1,
                      clump_kb = clump_kb,
-                     plink_bin = genetics.binaRies::get_plink_binary(), 
+                     plink_bin = genetics.binaRies::get_plink_binary(),
                      bfile = ref_path)
 
 nm_clump <- rename(nm_clump, snp=rsid)
