@@ -37,7 +37,7 @@ analysis:
         R:
             type: ["ldsc"]
             pthresh: [0.2, 0.05]
-            l2_dir: "/nfs/turbo/sph-jvmorr/ldsc_reference_files/eur_w_ld_chr/"
+            l2_dir: "/nfs/turbo/sph-jvmorr/ld_reference_files/ldsc_reference_files/eur_w_ld_chr/"
 
 out:
     # Output data options:
