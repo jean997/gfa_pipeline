@@ -48,7 +48,11 @@ Should be `~/mambaforge/bin/python`.
 
 You now no longer need to use `module load python` to have access to python 3.9.
 
-You will need to reinstall your python modules. We will do that as part of these instructions. 
+In order for the GWAS file tracker to still work, you need to install the wget and pyyaml python modules in your base environment. Type
+
+```
+mamba install wget pyyaml
+```
 
 ### Step 2: Install Snakemake
 
@@ -66,11 +70,7 @@ snakemake -h
 ```
 You should get a lot of help output. If you see "command not found" the something went wrong. 
 
-Last note: In order for the GWAS file tracker to still work, you need to install the wget and pyyaml python modules in your base environment. Type
 
-```
-mamba install wget pyyaml
-```
 
 ### Step 3 Install Some necessary R packages
 
