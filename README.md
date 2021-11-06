@@ -212,4 +212,4 @@ Ctrl+a d
  screen -r
  ```
 
-If you want to kill the entire session, use `sequeue -u <username>` to find the job number of the interactive session and use `scancel <jobnumber>` to kill it. You can also resume the session and type `exit` which will terminate the interactive session. 
+If you want to kill the entire session, use `squeue -u <username>` to find the job number of the interactive session and use `scancel <jobnumber>` to kill it. You can also resume the session and type `exit` which will terminate the interactive session. 
