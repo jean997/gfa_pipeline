@@ -17,7 +17,7 @@ import random
 import string
 from snakemake.utils import validate
 
-localrules: all, summ_to_cor
+localrules: all, summ_to_cor, check_success, fail, final_flash
 ###### Load configuration file
 configfile: "config.yaml"
 #validate(config, schema="schemas/config.schema.yaml")
@@ -56,7 +56,7 @@ if "ldsc" in config["analysis"]["gfa"]["R"]["type"]:
     R_strings.append("ldsc")
 
 
-inp = expand(out_dir + prefix + "fit_{gfas}.ldpruned_{lds}.R_{rs}.RDS",
+inp = expand(out_dir + prefix + "status_{gfas}.ldpruned_{lds}.R_{rs}.txt",
                 gfas = gfa_strings,
                 lds = ld_strings,
                 rs = R_strings)
@@ -147,23 +147,67 @@ rule summ_to_ldsc_cov:
 # Run flash
 #
 
-# With p-thresh R
-rule run_flash1:
+
+def R_input(wcs):
+    global data_dir
+    global prefix
+    if wcs.Rtype == "ldsc":
+        return data_dir + prefix + "R_estimate.R_ldsc.RDS"
+    else:
+        return f'{data_dir}{prefix}R_estimate.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.RDS'
+
+
+rule run_flash:
     input: NB = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_seed{{ls}}.{chrom}.RDS", chrom = range(1, 23)),
-           R = data_dir + prefix + "R_estimate.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_pt{pt}.RDS"
-    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_pt{pt}.RDS",
+           R = R_input
+    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.1.RDS",
     shell: 'Rscript R/5_run_flash_prefit.R {output.out} {input.R}  {wildcards.m} \
             {wildcards.k} {wildcards.ms} {wildcards.np} {wildcards.mvr} \
             {wildcards.fm} {wildcards.maxiter} {wildcards.fs} {input.NB}'
 
+def refit_input(wcs):
+    n = int(wcs.n)
+    oldn = str(n-1)
+    return f'{out_dir}{prefix}fit_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.{oldn}.RDS'
+ 
+rule refit_flash:
+    input:  refit_input
+    output: out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS",
+    shell: 'Rscript R/6_refit_flash_prefit.R {input} {output.out}  {wildcards.fm}  {wildcards.maxiter}'
 
-# With LDSC R
-rule run_flash2:
-    input: NB = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_seed{{ls}}.{chrom}.RDS", chrom = range(1, 23)),
-           R = data_dir + prefix + "R_estimate.R_ldsc.RDS"
-    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_ldsc.RDS",
-    shell: 'Rscript R/5_run_flash_prefit.R {output.out} {input.R}  {wildcards.m} \
-            {wildcards.k} {wildcards.ms} {wildcards.np} {wildcards.mvr} \
-            {wildcards.fm} {wildcards.maxiter} {wildcards.fs} {input.NB}'
+flash_tries = 0
+max_flash_tries =  int(config["analysis"]["gfa"]["maxrep"])
 
+def next_input(wcs):
+    global flash_tries
+    global max_flash_tries
+    global out_dir
+    global prefix
+    success_file = f'{out_dir}{prefix}success_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
+    fail_file = f'{out_dir}{prefix}fail_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
+    #return fail_file
+    if os.path.exists(success_file):
+        return success_file
+    elif flash_tries > max_flash_tries:
+        return fail_file
+    else:
+        flash_tries +=1
+        checkpoints.check_success.get(n=flash_tries, **wcs)
 
+checkpoint check_success:
+    input: out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS"
+    output: out = out_dir + prefix + "check_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.txt",
+    params: success_file = out_dir + prefix + 'success_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt'
+    wildcard_constraints: n = "\d+"
+    shell: "Rscript R/99_check_flash.R {input} {wildcards.n} {output.out} {params.success_file}"
+
+rule fail:
+    output: out_dir + prefix + 'fail_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt'
+    wildcard_constraints:  n = "\d+"
+    params: max_tries = max_flash_tries
+    shell: "echo  Model not converged after {params.max_tries} rounds of {maxiter} iterations. > {output} "
+
+rule final_flash:
+    input: next_input
+    output: out = out_dir + prefix + "status_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt",
+    shell: "cp {input} {output}"

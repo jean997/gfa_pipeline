@@ -90,16 +90,5 @@ if(type == "plain"){
 f$snps <- snps
 f$names <- new_names
 
-
-if(!is.null(f$fit$flash.fit$maxiter.reached)){
-    done <- FALSE
-    i <- 1
-    while(!done){
-        saveRDS(f, file = paste0(out, ".temp", i))
-        refit <- gfa_rebackfit(f$fit, f$fixed_ix, method = method, maxiter = maxiter)
-        if(is.null(refit$fit$flash.fit$maxiter.reached)) done <- TRUE
-    }
-}
-
 saveRDS(f, file=out)
 
