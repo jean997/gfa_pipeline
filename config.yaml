@@ -1,7 +1,7 @@
 # sum_stats is a csv file
 # neale_var_ref is only required if using files from the Neale lab round 2 2018 analysis
 input:
-    sum_stats: "2021-09-01_lipdplus.csv"
+    sum_stats: "2021-09-01_lipidplus.csv"
     neale_var_ref: "/nfs/turbo/sph-jvmorr/gwas_summary_statistics/NealeRound2_2018/variants.tsv.bgz"
 
 analysis:
@@ -19,18 +19,23 @@ analysis:
     # max_snp: Maixmum number of snps to use
     # nprefit: Number of prefits. Currently should be 0, a development feature.
     # min_var_ratio: Dosn't matter if nprefit is 0.
-    # method: A list that can contain "ext", "seq" or both. Specifies backfitting method used by flashier. ext is much faster.
+    # fit_method: A list that can contain "ext", "seq" or both. Specifies backfitting method used by flashier. ext is much faster.
+    # maxiter: Maximum number of backfitting itterations
+    # maxrep: If algorithm does not converge in maxiter iterations, the pipeline will try again this number of times. This allows restarting of non-converged fits.
     # method: A list which can contain ff-x where x is a number between 0 and 1 and "plain". For plain, the pipeline will fit without the correction for sample overlap. For ff-x, the pipeline will fit with the correction. If x is less than 1, only the top eigenvectors of R corresponding to the top x% of variance will be kept.
+    # method: A list that can contain "ext", "seq" or both. Specifies backfitting method used by flashier. ext is much faster.
     # est_L: currently unused
-    # gfa_seed: Seed for GFA
-    # R: Specifies options for how correlation is estimated. Type can be either "ldsc" or "pt" for the p-threshold method. LDSC is likely better. pthresh specifies the threshold for the p-threshold method. l2_dir gives the location of ld scores, required if using method "ldsc".
+    # gfa_seed: Seed for GFA. This can be a list, in which case multiple fits will be done using different seeds.
+    # R: Specifies options for how correlation is estimated. Type can be either "ldsc" or "pt" for the p-threshold method. LDSC is likely better.
+    # pthresh specifies the threshold for the p-threshold method. l2_dir gives the location of ld scores, required if using method "ldsc".
     gfa:
         kmax: 100
         max_snp: "Inf"
         nprefit: [0]
         min_var_ratio: 0.3
-        fit_method: ["ext", "seq"]
+        fit_method: ["seq", "ext"]
         maxiter: 1000
+        maxrep: 5
         method: ["ff-1"]
         est_L: FALSE
         gfa_seed: [1]
