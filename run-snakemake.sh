@@ -5,6 +5,7 @@ snakemake \
    --keep-going \
    --jobs 96 \
    --max-jobs-per-second 5 \
+   --latency-wait 30 \
    --cluster-config cluster.yaml  \
    --cluster "sbatch \
               --output={cluster.log}_%j.out \
