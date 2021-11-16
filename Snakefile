@@ -175,14 +175,18 @@ rule refit_flash:
     output: out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS",
     shell: 'Rscript R/6_refit_flash_prefit.R {input} {output.out}  {wildcards.fm}  {wildcards.maxiter}'
 
-flash_tries = 0
+# flash_tries = 0
 max_flash_tries =  int(config["analysis"]["gfa"]["maxrep"])
 
 def next_input(wcs):
-    global flash_tries
     global max_flash_tries
     global out_dir
     global prefix
+
+    check_prefix = f'{prefix}check_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.'
+    check_files = [y for y in os.listdir('results') if y.startswith(check_prefix) ]
+    flash_tries = len(check_files) + 1
+
     success_file = f'{out_dir}{prefix}success_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
     fail_file = f'{out_dir}{prefix}fail_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
     #return fail_file
@@ -191,7 +195,6 @@ def next_input(wcs):
     elif flash_tries > max_flash_tries:
         return fail_file
     else:
-        flash_tries +=1
         checkpoints.check_success.get(n=flash_tries, **wcs)
 
 checkpoint check_success:
