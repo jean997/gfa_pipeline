@@ -120,7 +120,7 @@ are only allowed if the data is a vcf file from the IEU open GWAS project. Since
 - beta_hat (**): Column name for coefficient estimate
 - se (**): Column name for standard error of beta_hat
 - p_value (*): Column name for p-value (note optional)
-- pos (*): Column name for genome position (note optional)
+- pos (**): Column name for genome position 
 - chrom (*): Column name for chromosome (note optional)
 - sample_size (*): Column name for per-SNP sample size (note optional)
 - neale_format (r): This column should contain `FALSE` unless the data are GWAS round 2 results from [here](http://www.nealelab.is/uk-biobank). These files have a different enough format that I had to write a separate parser for them. 

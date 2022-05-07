@@ -23,19 +23,19 @@ samplesize <- map(seq(nrow(info)),   function(i){
                         dat <- map_dfr(1:22, function(c){
                             cat(c, " ")
                             v <- query_chrompos_file(paste0(c, ":1-536870911"), f)
-                            d <- vcf_to_tibble(v) %>% 
+                            d <- vcf_to_tibble(v) %>%
                                    dplyr::rename(snp=rsid) %>%
                                    dplyr::filter(snp %in% fit$snps)
-                             return(d)  
-                            
+                             return(d)
+
                         })
                         dat$SS[is.na(dat$SS)] <- ss
                         sample_size <- median(dat$SS)
 
                         return(sample_size)
-                 }) 
+                 })
 ss <- data.frame(name = info$name, ss = unlist(samplesize))
-s <- ss$ss[match(str_replace(fit$name, ".est", ""), ss$name)]
+s <- ss$ss[match(str_replace(fit$name, ".z", ""), ss$name)]
 F_scale <- fit$F_hat/s
 F_scale <- apply(F_scale, 2, function(f){ f/sqrt(sum(f^2))})
 fit$F_scale <- F_scale

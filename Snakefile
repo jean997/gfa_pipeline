@@ -100,7 +100,7 @@ rule snp_table_chrom:
            {params.d} {output.out} {output.nmiss}'
 
 
-# This one uses plink clumping. Much faster.
+# LD prune with plink
 rule ld_prune_plink:
     input: nmiss = data_dir + prefix + "nmiss.{chrom}.RDS",
            bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed"
@@ -147,6 +147,7 @@ rule summ_to_ldsc_cov:
 # Run flash
 #
 
+# This now cycles in case of non-convergence
 
 def R_input(wcs):
     global data_dir
@@ -161,21 +162,24 @@ rule run_flash:
     input: NB = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_seed{{ls}}.{chrom}.RDS", chrom = range(1, 23)),
            R = R_input
     output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.1.RDS",
-    shell: 'Rscript R/5_run_flash_prefit.R {output.out} {input.R}  {wildcards.m} \
-            {wildcards.k} {wildcards.ms} {wildcards.np} {wildcards.mvr} \
+    shell: 'Rscript R/5_run_flash.R {output.out} {input.R}  {wildcards.m} \
+            {wildcards.k} {wildcards.ms} \
             {wildcards.fm} {wildcards.maxiter} {wildcards.fs} {input.NB}'
 
+
+# This step refits if convergence was not reached
 def refit_input(wcs):
     n = int(wcs.n)
     oldn = str(n-1)
     return f'{out_dir}{prefix}fit_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.{oldn}.RDS'
- 
+
 rule refit_flash:
     input:  refit_input
     output: out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS",
-    shell: 'Rscript R/6_refit_flash_prefit.R {input} {output.out}  {wildcards.fm}  {wildcards.maxiter}'
+    shell: 'Rscript R/6_refit_flash.R {input} {output.out}  {wildcards.fm}  {wildcards.maxiter}'
 
-# flash_tries = 0
+# Below is snakemake machinery for checking convergence and re-running if necessary
+
 max_flash_tries =  int(config["analysis"]["gfa"]["maxrep"])
 
 def next_input(wcs):
