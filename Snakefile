@@ -222,7 +222,6 @@ rule final_flash:
     shell: "cp {input} {output}"
 
 rule estimate_L:
-    input: inp = out_dir + prefix + "fit_{key}.RDS",
-           zmat = data_dir + prefix + "zmat.{chrom}.RDS"
-    output: out_dir + prefix + "estL_{key}.{chr}.RDS"
-    shell: "Rscript 7_estimate_L.RDS {input.inp} {input.zmat} {output}"
+    input: inp = out_dir + prefix + "fit_{key}.RDS", zmat = data_dir + prefix + "zmat.{chrom}.RDS"
+    output: out = out_dir + prefix + "estL_{key}.{chrom}.RDS"
+    shell: "Rscript R/7_estimate_L.R {input.inp} {input.zmat} {output.out}"
