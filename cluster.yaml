@@ -15,10 +15,10 @@ ld_prune_plink:
     mem: "10G"
     time:  "1:00:00"
 
-run_flash1:
+run_flash:
     mem: "20G"
     time: "1-00:00:00"
 
-run_flash2:
+refit_flash:
     mem: "20G"
     time: "1-00:00:00"

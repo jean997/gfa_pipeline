@@ -63,7 +63,7 @@ mamba install -c conda-forge -c bioconda snakemake
 ```
 
 You will need to confirm changes by hitting enter at the prompt (or typing Y). This will install snakemake into your base environment. 
-It will take a few minutes. Confim that snakmake is now installed by typing 
+It will take a few minutes. Confirm that snakmake is now installed by typing 
 
 ```
 snakemake -h 

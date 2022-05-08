@@ -78,11 +78,11 @@ new_names <- R$names
 
 if(type == "plain"){
         f <- fit_ff_update(Z_hat = Z_hat, kmax = kmax,
-                           extrapolate = extrapolate, max_final_iter = maxiter,
+                           extrapolate = extrapolate, max_iter = maxiter,
                            max_lr_percent = max_ev)
 }else if(type == "ff"){
         f <- fit_ff_update(Z_hat = Z_hat, R = R$R, kmax = kmax,
-                           extrapolate = extrapolate, max_final_iter = maxiter,
+                           extrapolate = extrapolate, max_iter = maxiter,
                            max_lr_percent = max_ev)
 }
 

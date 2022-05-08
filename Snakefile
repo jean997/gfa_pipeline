@@ -31,14 +31,10 @@ formatted_gwas_dir = config["out"]["formatted_gwas_dir"]
 
 prefix = config["input"]["sum_stats"].replace(".csv", "") +  "_"
 
-est_L = config["analysis"]["gfa"]["est_L"]
-
-gfa_strings = expand("{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{s}",
+gfa_strings = expand("{m}_{k}_{ms}_{fm}_{maxiter}_seed{s}",
                      m = config["analysis"]["gfa"]["method"],
                      k = config["analysis"]["gfa"]["kmax"],
                      ms = config["analysis"]["gfa"]["max_snp"],
-                     np = config["analysis"]["gfa"]["nprefit"],
-                     mvr = config["analysis"]["gfa"]["min_var_ratio"],
                      fm = config["analysis"]["gfa"]["fit_method"],
                      maxiter = config["analysis"]["gfa"]["maxiter"],
                      s = config["analysis"]["gfa"]["gfa_seed"])
@@ -60,6 +56,12 @@ inp = expand(out_dir + prefix + "status_{gfas}.ldpruned_{lds}.R_{rs}.txt",
                 gfas = gfa_strings,
                 lds = ld_strings,
                 rs = R_strings)
+
+est_L = config["analysis"]["gfa"]["est_L"]
+if est_L:
+    est_L_key = config["analysis"]["gfa"]["est_L_key"]
+    inp = expand(out_dir + prefix + "estL_" + est_L_key + ".{chr}.RDS", chr = range(1, 23))
+
 
 #inp = expand(data_dir + prefix + "R_estimate.ldpruned_{lds}.R_pt{pt}.RDS",
 #                lds = ld_strings,
@@ -161,7 +163,7 @@ def R_input(wcs):
 rule run_flash:
     input: NB = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_seed{{ls}}.{chrom}.RDS", chrom = range(1, 23)),
            R = R_input
-    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.1.RDS",
+    output:  out = out_dir + prefix + "fit_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.1.RDS",
     shell: 'Rscript R/5_run_flash.R {output.out} {input.R}  {wildcards.m} \
             {wildcards.k} {wildcards.ms} \
             {wildcards.fm} {wildcards.maxiter} {wildcards.fs} {input.NB}'
@@ -171,11 +173,11 @@ rule run_flash:
 def refit_input(wcs):
     n = int(wcs.n)
     oldn = str(n-1)
-    return f'{out_dir}{prefix}fit_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.{oldn}.RDS'
+    return f'{out_dir}{prefix}fit_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.{oldn}.RDS'
 
 rule refit_flash:
     input:  refit_input
-    output: out = out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS",
+    output: out = out_dir + prefix + "fit_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS",
     shell: 'Rscript R/6_refit_flash.R {input} {output.out}  {wildcards.fm}  {wildcards.maxiter}'
 
 # Below is snakemake machinery for checking convergence and re-running if necessary
@@ -187,12 +189,12 @@ def next_input(wcs):
     global out_dir
     global prefix
 
-    check_prefix = f'{prefix}check_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.'
+    check_prefix = f'{prefix}check_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.'
     check_files = [y for y in os.listdir('results') if y.startswith(check_prefix) ]
     flash_tries = len(check_files) + 1
 
-    success_file = f'{out_dir}{prefix}success_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
-    fail_file = f'{out_dir}{prefix}fail_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.np}_{wcs.mvr}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
+    success_file = f'{out_dir}{prefix}success_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
+    fail_file = f'{out_dir}{prefix}fail_{wcs.m}_{wcs.k}_{wcs.ms}_{wcs.fm}_{wcs.maxiter}_seed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
     #return fail_file
     if os.path.exists(success_file):
         return success_file
@@ -202,19 +204,25 @@ def next_input(wcs):
         checkpoints.check_success.get(n=flash_tries, **wcs)
 
 checkpoint check_success:
-    input: out_dir + prefix + "fit_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS"
-    output: out = out_dir + prefix + "check_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.txt",
-    params: success_file = out_dir + prefix + 'success_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt'
+    input: out_dir + prefix + "fit_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS"
+    output: out = out_dir + prefix + "check_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.txt",
+    params: success_file = out_dir + prefix + 'success_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt'
     wildcard_constraints: n = "\d+"
     shell: "Rscript R/99_check_flash.R {input} {wildcards.n} {output.out} {params.success_file}"
 
 rule fail:
-    output: out_dir + prefix + 'fail_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt'
+    output: out_dir + prefix + 'fail_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt'
     wildcard_constraints:  n = "\d+"
     params: max_tries = max_flash_tries
     shell: "echo  Model not converged after {params.max_tries} rounds of {maxiter} iterations. > {output} "
 
 rule final_flash:
     input: next_input
-    output: out = out_dir + prefix + "status_{m}_{k}_{ms}_{np}_{mvr}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt",
+    output: out = out_dir + prefix + "status_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt",
     shell: "cp {input} {output}"
+
+rule estimate_L:
+    input: inp = out_dir + prefix + "fit_{key}.RDS",
+           zmat = data_dir + prefix + "zmat.{chrom}.RDS"
+    output: out_dir + prefix + "estL_{key}.{chr}.RDS"
+    shell: "Rscript 7_estimate_L.RDS {input.inp} {input.zmat} {output}"

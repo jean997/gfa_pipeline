@@ -1,7 +1,7 @@
 # sum_stats is a csv file
 # neale_var_ref is only required if using files from the Neale lab round 2 2018 analysis
 input:
-    sum_stats: "2021-09-01_lipidplus.csv"
+    sum_stats: "metabo.csv"
     neale_var_ref: "/nfs/turbo/sph-jvmorr/gwas_summary_statistics/NealeRound2_2018/variants.tsv.bgz"
 
 analysis:
@@ -31,16 +31,15 @@ analysis:
     gfa:
         kmax: 100
         max_snp: "Inf"
-        nprefit: [0]
-        min_var_ratio: 0.3
-        fit_method: ["seq", "ext"]
+        fit_method: ["ext"]
         maxiter: 1000
         maxrep: 5
         method: ["ff-1"]
         est_L: FALSE
+        est_L_key: "none"
         gfa_seed: [1]
         R:
-            type: ["ldsc"]
+            type: ["ldsc", "pt"]
             pthresh: [0.2, 0.05]
             l2_dir: "/nfs/turbo/sph-jvmorr/ld_reference_files/ldsc_reference_files/eur_w_ld_chr/"
 
