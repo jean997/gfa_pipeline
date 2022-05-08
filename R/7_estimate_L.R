@@ -28,10 +28,15 @@ Z_hat <- X %>%
 z_order <- match(fit$names, nms)
 Z_hat <- Z_hat[,z_order]
 
-
+nfct <- ncol(fit$F_hat)
 Lfit <- est_L_flash2(Z_hat = Z_hat, fit = fit$fit)
-L_df <- cbind(X$snp, Lfit$L.pm, Lfit$L.psd)
-names(L_df) <- c("snp", paste0(fit$names, "_pm"), paste0(fit$names, "_psd"))
+L_df <- cbind( Lfit$L.pm[,-fit$fixed_ix], Lfit$L.psd[, -fit$fixed_ix],
+               Lfit$L.lfsr[, -fit$fixed_ix]) %>% data.frame()
+names(L_df) <- c(paste0("fct_", 1:nfct, "_pm"),
+                 paste0("fct_", 1:nfct, "_psd"),
+                 paste0("fct_", 1:nfct, "_lfsr"))
+L_df$snp <- X$snp
+L_df$chr <- X$chr
 
 saveRDS(L_df, out_file)
 
