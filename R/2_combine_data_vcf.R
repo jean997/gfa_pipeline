@@ -10,8 +10,9 @@ args <- commandArgs(trailingOnly=TRUE)
 c <- args[1]
 gwas_info_file <- args[2]
 dir <- args[3]
-out <- args[4]
-nm_out <- args[5]
+nmiss_thresh <- args[4]
+out <- args[5]
+nm_out <- args[6]
 
 info <- read_csv(gwas_info_file)
 
@@ -24,13 +25,13 @@ fulldat <- map(seq(nrow(info)),   function(i){
                         pos_name <- as_name(paste0(n, ".pos"))
                         z_name <- as_name(paste0(n, ".z"))
                         ss_name <- as_name(paste0(n, ".ss"))
-                        dat <- vcf_to_tibble(v) %>% 
+                        dat <- vcf_to_tibble(v) %>%
                                 dplyr::rename(snp=rsid) %>%
-                                dplyr::mutate(Z  = ES/SE) %>% 
+                                dplyr::mutate(Z  = ES/SE) %>%
                                 dplyr::select(chr:=seqnames,  snp, REF, ALT, #start, Z, SS)
-                                              !!pos_name := start, 
-                                              !!z_name := Z, 
-                                              !!ss_name := SS) 
+                                              !!pos_name := start,
+                                              !!z_name := Z,
+                                              !!ss_name := SS)
                         if(all(is.na(dat[[ss_name]]))) dat[[ss_name]] <- ss
                         return(dat)
                  }) %>%
@@ -40,16 +41,20 @@ dup_snps <- fulldat$snp[duplicated(fulldat$snp)]
 if(length(dup_snps) > 0){
     fulldat <- filter(fulldat, !snp %in% dup_snps)
 }
-            
-saveRDS(fulldat, file=out)
+
 
 
 # Save table of how traits are missing each SNP for LD clumping
-miss <- fulldat %>% 
+miss <- fulldat %>%
         select(ends_with(".z")) %>%
         is.na(.) %>%
         rowSums(.)
 
 nmiss <- data.frame(snp = fulldat$snp, miss = miss)
-saveRDS(nmiss, file=nm_out)
+
+ix <- which(miss <= nmiss_thresh)
+
+saveRDS(fulldat[ix,], file=out)
+
+saveRDS(nmiss[ix,], file=nm_out)
 

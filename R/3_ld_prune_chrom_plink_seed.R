@@ -10,7 +10,7 @@ out_nm <- args[5]
 seed <- args[6]
 
 nmiss <- nmiss %>%
-         filter(miss == 0 ) %>%
+        # filter(miss == 0 ) %>%
          rename(rsid = snp)
 
 

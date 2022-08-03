@@ -2,6 +2,7 @@
 # neale_var_ref is only required if using files from the Neale lab round 2 2018 analysis
 input:
     sum_stats: "metabo.csv"
+    label: "metabo"
     neale_var_ref: "/nfs/turbo/sph-jvmorr/gwas_summary_statistics/NealeRound2_2018/variants.tsv.bgz"
 
 analysis:
@@ -15,32 +16,23 @@ analysis:
         clump_kb: [10000]
         ref_path: "/nfs/turbo/sph-jvmorr/ld_reference_files/1kg_plink/EUR"
     # GFA options:
-    # kmax: Maximum number of factors to add
-    # max_snp: Maixmum number of snps to use
-    # nprefit: Number of prefits. Currently should be 0, a development feature.
-    # min_var_ratio: Dosn't matter if nprefit is 0.
-    # fit_method: A list that can contain "ext", "seq" or both. Specifies backfitting method used by flashier. ext is much faster.
-    # maxiter: Maximum number of backfitting itterations
+    # gfa_params: If "default", will use default parameters, otherwise provide an R string with values, eg "list(max_iter = 5000)".
+    # mode: Either "z-score" to use z-score or "b-std" to use standardized effect estimates.
+    # nmiss_thresh: Maximum number of missing studies per snp. Recomend 0.
     # maxrep: If algorithm does not converge in maxiter iterations, the pipeline will try again this number of times. This allows restarting of non-converged fits.
-    # method: A list which can contain ff-x where x is a number between 0 and 1 and "plain". For plain, the pipeline will fit without the correction for sample overlap. For ff-x, the pipeline will fit with the correction. If x is less than 1, only the top eigenvectors of R corresponding to the top x% of variance will be kept.
-    # method: A list that can contain "ext", "seq" or both. Specifies backfitting method used by flashier. ext is much faster.
     # est_L: currently unused
     # gfa_seed: Seed for GFA. This can be a list, in which case multiple fits will be done using different seeds.
     # R: Specifies options for how correlation is estimated. Type can be either "ldsc" or "pt" for the p-threshold method. LDSC is likely better.
     # pthresh specifies the threshold for the p-threshold method. l2_dir gives the location of ld scores, required if using method "ldsc".
-    gfa:
-        kmax: 100
-        max_snp: "Inf"
-        fit_method: ["ext"]
-        maxiter: 1000
-        maxrep: 5
-        method: ["ff-1"]
-        est_L: FALSE
-        est_L_key: "none"
-        gfa_seed: [1]
-        R:
-            type: ["ldsc", "pt"]
-            pthresh: [0.2, 0.05]
+    gfa_params: "default"
+    mode: "z-score"
+    nmiss_thresh: 0
+    maxrep: 5
+    est_L: FALSE
+    gfa_seed: [1]
+    R:
+        type: "ldsc"
+        pthresh: "NA"
             l2_dir: "/nfs/turbo/sph-jvmorr/ld_reference_files/ldsc_reference_files/eur_w_ld_chr/"
 
 out:
