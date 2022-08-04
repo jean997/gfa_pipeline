@@ -10,9 +10,9 @@ mode <- args[2]
 R_est_file <- args[3]
 params_file <- args[4]
 max_snp <- args[5]
-seed <- as.numeric(args[5])
+seed <- as.numeric(args[6])
 
-nb_files = args[-c(1:5)]
+nb_files = args[-c(1:6)]
 
 set.seed(seed)
 
@@ -50,7 +50,7 @@ snps <- X$snp
 
 nms <- names(X)[grep(".z$", names(X))]
 
-if(R_est_file == "none"){
+if(str_ends(R_est_file, "none_R.txt")){
   R <- list(names = nms, R = diag(length(nms)))
 }else{
   R <- readRDS(R_est_file)
@@ -63,11 +63,13 @@ if(R_est_file == "none"){
 
 
 
-if(mode == "z-hat"){
+if(mode == "z-score"){
   f <- gfa_fit(Z_hat = Z_hat, R = R$R, params = params)
+  N <- apply(SS, 2, median)
+  f$F_hat_scaled <- t(t(f$F_hat)/sqrt(N))
 }else{
   N <- apply(SS, 2, median)
-  B_std <- t( t(Z_hat)*N)
+  B_std <- t( t(Z_hat)/sqrt(N))
   f <- gfa_fit(B_std = B_std, N = N, R = R$R, params = params)
 }
 

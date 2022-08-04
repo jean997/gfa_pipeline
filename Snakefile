@@ -48,6 +48,9 @@ else:
 if "ldsc" in config["analysis"]["R"]["type"]:
     R_strings.append("ldsc")
 
+if "ldsc" in config["analysis"]["R"]["type"]:
+    R_strings.append("ldsc_full")
+
 if "none" in config["analysis"]["R"]["type"]:
     R_strings.append("none")
 
@@ -121,6 +124,11 @@ rule subset_zmat:
     shell: 'Rscript R/3_subset_zmat.R {input.normbeta} {input.keep} {output.normbeta}'
 
 ## Estimate R
+# We can compute the p-thresholded R matrix without ever reading in all of the data
+# We first compute per chromosome summaries and the compute R
+# There is an LD score version of this but it does not update the weights and so it has higher variance
+# than the published version
+# Finally there is the full LD score version
 rule score_summ:
     input: normbeta =  data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_seed{s}.{chrom}.RDS"
     output: summ =  data_dir + prefix + "zmat_summary.ldpruned_r2{r2_thresh}_kb{kb}_seed{s}.R_pt{pt}.{chrom}.RDS",
@@ -150,6 +158,30 @@ rule none_R:
     output: out = data_dir + "none_R.txt"
     shell: "touch {output.out}"
 
+# Full LDSC compute by pair
+# M doesn't matter so this could be modified to leave it out.
+rule ldsc_rg_pair:
+    input: f1 = formatted_gwas_dir + "{name1}.vcf.bgz",
+           f2 = formatted_gwas_dir + "{name2}.vcf.bgz",
+           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
+           m = expand(l2_dir + "{chrom}.M_5_50", chrom = range(1, 23))
+    output: out =  data_dir + prefix + "ldsc.{name1}.{name2}.RDS
+    shell: 'Rscript R/3_ldsc_pair.R {input.f1} {input.f2} \
+           {l2_dir} {output.out}'
+
+
+name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumerate(ss['name']) if i1 <= i2]
+n1 = [np[0] for np in name_pairs]
+n2 = [np[1] for np in name_pairs]
+
+rule R_ldsc_full:
+    input: data = exapnd(data_dir + prefix + "ldsc.{name1}.{name2}.RDS", name1 = n1, name2 = n2),
+           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
+    output: out = data_dir + prefix + "R_estimate.R_ldsc_full.RDS"
+    params: gwas_info = config["input"]["sum_stats"], root = data_dir + prefix
+    shell: 'Rscript R/4_create_ldsc_full.R {output.out} {params.gwas_info} \
+              {params.root}'
+
 # Run GFA
 #
 
@@ -160,6 +192,8 @@ def R_input(wcs):
         return f'{data_dir}{prefix}R_estimate.R_ldsc.RDS'
     elif wcs.Rtype == "none":
         return f'{data_dir}none_R.txt'
+    elif wcs.Rtype == "ldsc_full"
+        return f'{data_dir}{prefix}R_estimate.R_ldsc_full.RDS'
     else:
         return f'{data_dir}{prefix}R_estimate.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.RDS'
 
@@ -168,7 +202,7 @@ rule run_gfa:
     input: NB = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_seed{{ls}}.{chrom}.RDS", chrom = range(1, 23)),
            R = R_input
     output:  out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.1.RDS",
-    params: params_file = config["analysis"]["gfa_params"], max_snps = config["anlaysis"]["max_snps"]
+    params: params_file = config["analysis"]["gfa_params"], max_snps = config["analysis"]["max_snps"]
     shell: 'Rscript R/5_run_gfa.R {output.out} {wildcards.mode} {input.R}  \
             {params.params_file} {params.max_snps} {wildcards.fs} \
             {input.NB}'
