@@ -44,6 +44,7 @@ if "pt" in config["analysis"]["R"]["type"]:
     R_strings = expand("pt{pt}", pt = config["analysis"]["R"]["pthresh"])
 else:
     R_strings = []
+
 if "ldsc" in config["analysis"]["R"]["type"]:
     R_strings.append("ldsc")
 
@@ -194,11 +195,11 @@ def next_input(wcs):
     global prefix
 
     check_prefix = f'{prefix}check_{wcs.mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.'
-    check_files = [y for y in os.listdir('results') if y.startswith(check_prefix) ]
+    check_files = [y for y in os.listdir(out_dir) if y.startswith(check_prefix) ]
     flash_tries = len(check_files) + 1
 
-    success_file = f'{out_dir}{prefix}success_{mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
-    fail_file = f'{out_dir}{prefix}fail_{mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
+    success_file = f'{out_dir}{prefix}success_{wcs.mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
+    fail_file = f'{out_dir}{prefix}fail_{wcs.mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.txt'
     #return fail_file
     if os.path.exists(success_file):
         return success_file
@@ -208,9 +209,9 @@ def next_input(wcs):
         checkpoints.check_success.get(n=flash_tries, **wcs)
 
 checkpoint check_success:
-    input: out_dir + prefix + "fit_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS"
-    output: out = out_dir + prefix + "check_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.txt",
-    params: success_file = out_dir + prefix + 'success_{m}_{k}_{ms}_{fm}_{maxiter}_seed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt'
+    input: out_dir + prefix + "gfa_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.RDS"
+    output: out = out_dir + prefix + "check_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.{n}.txt",
+    params: success_file = out_dir + prefix + 'success_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.txt'
     wildcard_constraints: n = "\d+"
     shell: "Rscript R/99_check_flash.R {input} {wildcards.n} {output.out} {params.success_file}"
 
