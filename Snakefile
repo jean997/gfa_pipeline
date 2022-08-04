@@ -45,10 +45,10 @@ if "pt" in config["analysis"]["R"]["type"]:
 else:
     R_strings = []
 if "ldsc" in config["analysis"]["R"]["type"]:
-    R_strings = R_strings.append("ldsc")
+    R_strings.append("ldsc")
 
 if "none" in config["analysis"]["R"]["type"]:
-    R_strings = R_strings.append("none")
+    R_strings.append("none")
 
 
 inp = expand(out_dir + prefix + "status_{gfas}.ldpruned_{lds}.R_{rs}.txt",
@@ -157,7 +157,7 @@ def R_input(wcs):
     global prefix
     if wcs.Rtype == "ldsc":
         return f'{data_dir}{prefix}R_estimate.R_ldsc.RDS'
-    else if wcs.Rtype == "none":
+    elif wcs.Rtype == "none":
         return f'{data_dir}none_R.txt'
     else:
         return f'{data_dir}{prefix}R_estimate.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.RDS'
