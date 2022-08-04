@@ -29,7 +29,7 @@ data_dir = config["out"]["data_dir"] #where the data is
 out_dir = config["out"]["output_dir"] #where results will go
 formatted_gwas_dir = config["out"]["formatted_gwas_dir"]
 
-prefix = config["input"]["label"]
+prefix = config["input"]["label"] + "_"
 
 gfa_strings = expand("{mode}_gfaseed{s}",
                      mode = config["analysis"]["mode"],
