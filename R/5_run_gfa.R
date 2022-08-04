@@ -9,6 +9,7 @@ out <- args[1]
 mode <- args[2]
 R_est_file <- args[3]
 params_file <- args[4]
+max_snp <- args[5]
 seed <- as.numeric(args[5])
 
 nb_files = args[-c(1:5)]

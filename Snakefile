@@ -168,9 +168,9 @@ rule run_gfa:
     input: NB = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_seed{{ls}}.{chrom}.RDS", chrom = range(1, 23)),
            R = R_input
     output:  out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_seed{ls}.R_{Rtype}.1.RDS",
-    params: params_file = config["analysis"]["gfa_params"]
+    params: params_file = config["analysis"]["gfa_params"], max_snps = config["anlaysis"]["max_snps"]
     shell: 'Rscript R/5_run_gfa.R {output.out} {wildcards.mode} {input.R}  \
-            {params.params_file} {wildcards.fs} \
+            {params.params_file} {params.max_snps} {wildcards.fs} \
             {input.NB}'
 
 # This step refits if convergence was not reached
