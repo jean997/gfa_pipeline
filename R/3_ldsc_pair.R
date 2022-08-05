@@ -53,7 +53,7 @@ if(f1 == f2){
 }else{
   d2 <- query_gwas(vcf = f2, chrompos = paste0(ld$CHR, ":", ld$BP)) %>% vcf_to_tibble()
   ss2 <- median(d2$SS)
-  dat2 <- d1 %>%
+  dat2 <- d2 %>%
         mutate(z2 = ES/SE) %>%
         dplyr::select(rsid, z2)
 
