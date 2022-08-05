@@ -1,6 +1,7 @@
 #!/bin/bash
 
 mkdir -p log
+mkdir -p results
 snakemake \
    --keep-going \
    --jobs 96 \
