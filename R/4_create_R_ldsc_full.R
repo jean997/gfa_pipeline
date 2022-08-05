@@ -31,7 +31,7 @@ cov_mat <- df %>%
 nms <- cov_mat$n1
 R <- as.matrix(cov_mat[,-1])
 
-R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3);
+R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3) %>% with(., as.matrix(mat));
 
 eS <- eigen(R)
 
