@@ -1,6 +1,6 @@
 library(dplyr)
 library(purrr)
-librar(readr)
+library(readr)
 
 args <- commandArgs(trailingOnly=TRUE)
 out <- args[1]
@@ -17,14 +17,14 @@ df <- expand.grid(n1 = names, n2 = names) %>%
 df$exists1 <- file.exists(df$file1)
 df$exists2 <- file.exists(df$file2)
 
-df <- mutate(file = case_when(exists1 ~ file1, exists2 ~ file2, TRUE ~ NA))
+df <- df %>% mutate(file = case_when(exists1 ~ file1, exists2 ~ file2, TRUE ~ NA_character_))
 
 df$cov <- sapply(df$file, function(f){
   x <- readRDS(f)
   x[["int"]]
 })
 
-cov_mat <- bind_rows(df, df_copy)  %>%
+cov_mat <- df %>%
   select(n1, n2, cov) %>%
   reshape2::dcast(n1 ~ n2)
 

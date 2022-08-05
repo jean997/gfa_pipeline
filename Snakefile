@@ -164,22 +164,21 @@ rule ldsc_rg_pair:
     input: f1 = formatted_gwas_dir + "{name1}.vcf.bgz",
            f2 = formatted_gwas_dir + "{name2}.vcf.bgz",
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
-           m = expand(l2_dir + "{chrom}.M_5_50", chrom = range(1, 23))
-    output: out =  data_dir + prefix + "ldsc.{name1}.{name2}.RDS
+           m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23))
+    output: out =  data_dir + prefix + "ldsc.{name1}.{name2}.RDS"
+    params: gwas_info = config["input"]["sum_stats"]
     shell: 'Rscript R/3_ldsc_pair.R {input.f1} {input.f2} \
-           {l2_dir} {output.out}'
+           {l2_dir} {params.gwas_info} {output.out}'
 
 
 name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumerate(ss['name']) if i1 <= i2]
-n1 = [np[0] for np in name_pairs]
-n2 = [np[1] for np in name_pairs]
 
 rule R_ldsc_full:
-    input: data = exapnd(data_dir + prefix + "ldsc.{name1}.{name2}.RDS", name1 = n1, name2 = n2),
+    input: data = expand(data_dir + prefix + "ldsc.{np[0]}.{np[1]}.RDS", np = name_pairs),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
     output: out = data_dir + prefix + "R_estimate.R_ldsc_full.RDS"
     params: gwas_info = config["input"]["sum_stats"], root = data_dir + prefix
-    shell: 'Rscript R/4_create_ldsc_full.R {output.out} {params.gwas_info} \
+    shell: 'Rscript R/4_create_R_ldsc_full.R {output.out} {params.gwas_info} \
               {params.root}'
 
 # Run GFA
@@ -192,7 +191,7 @@ def R_input(wcs):
         return f'{data_dir}{prefix}R_estimate.R_ldsc.RDS'
     elif wcs.Rtype == "none":
         return f'{data_dir}none_R.txt'
-    elif wcs.Rtype == "ldsc_full"
+    elif wcs.Rtype == "ldsc_full":
         return f'{data_dir}{prefix}R_estimate.R_ldsc_full.RDS'
     else:
         return f'{data_dir}{prefix}R_estimate.ldpruned_r2{wcs.r2}_kb{wcs.kb}_seed{wcs.ls}.R_{wcs.Rtype}.RDS'

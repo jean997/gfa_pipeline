@@ -4,14 +4,16 @@ library(purrr)
 library(VariantAnnotation)
 library(gwasvcf)
 library(readr)
+library(bigsnpr)
+library(stringr)
 
 
 args <- commandArgs(trailingOnly=TRUE)
 f1 <- args[1]
 f2 <- args[2]
-ss1 <- args[3]
 l2_dir <- args[3]
-out <- args[4]
+gwas_info <- read_csv(args[4])
+out <- args[5]
 
 
 ld <- purrr::map_dfr(1:22, function(c){
@@ -25,10 +27,13 @@ M <- purrr:::map(1:22, function(c){
 
 set_bcftools()
 
-d1 <- query_gwas(vcf = f1, chrompos = paste0(ld$CHR, ":", ld$BP))
+d1 <- query_gwas(vcf = f1, chrompos = paste0(ld$CHR, ":", ld$BP)) %>% vcf_to_tibble()
 ss1 <- median(d1$SS)
+if(is.na(ss1)){
+    i <- which(str_detect(f1, gwas_info$name))
+    ss1 <- gwas_info$pub_sample_size[i]
+}
 dat1 <- d1 %>%
-        vcf_to_tibble() %>%
         mutate(z1 = ES/SE) %>%
         dplyr::select(rsid, z1)
 
@@ -44,15 +49,18 @@ if(f1 == f2){
                     sample_size = ss1,
                     blocks = NULL)
 
-  saveRDS(rg, file= out)
+  saveRDS(h2, file= out)
 }else{
-  d2 <- query_gwas(vcf = f2, chrompos = paste0(ld$CHR, ":", ld$BP))
+  d2 <- query_gwas(vcf = f2, chrompos = paste0(ld$CHR, ":", ld$BP)) %>% vcf_to_tibble()
   ss2 <- median(d2$SS)
   dat2 <- d1 %>%
-        vcf_to_tibble() %>%
         mutate(z2 = ES/SE) %>%
         dplyr::select(rsid, z2)
 
+   if(is.na(ss2)){
+        i <- which(str_detect(f2, gwas_info$name))
+        ss2 <- gwas_info$pub_sample_size[i]
+   }
 
   full_dat <- inner_join(dat1, dat2) %>%
             dplyr::rename(SNP = rsid) %>%
