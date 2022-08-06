@@ -28,7 +28,7 @@ cov_mat <- df %>%
   select(n1, n2, cov) %>%
   reshape2::dcast(n1 ~ n2)
 
-nms <- cov_mat$n1
+nms <- paste0(as.vector(cov_mat$n1), ".z")
 R <- as.matrix(cov_mat[,-1])
 
 R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3) %>% with(., as.matrix(mat));
