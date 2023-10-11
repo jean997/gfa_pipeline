@@ -1,9 +1,9 @@
 library(sumstatFactors)
 
-args <- commandArgs(trailingOnly = TRUE)
-inp <- args[1]
-outp <- args[2]
-params_file <- args[3]
+inp <- snakemake@input[[1]]
+outp <- snakemake@output[["out"]]
+params_file <- snakemake@params[["param_file"]]
+
 
 param_default <- gfa_default_parameters()
 if(params_file == "default"){

@@ -2,10 +2,10 @@ library(dplyr)
 library(purrr)
 library(readr)
 
-args <- commandArgs(trailingOnly=TRUE)
-out <- args[1]
-gwas_info <- args[2]
-root <- args[3]
+
+out <- snakemake@output[["out"]]
+gwas_info <- snakemake@params[["gwas_info"]]
+root <- snakemake@params[["root"]]
 
 
 names <- read_csv(gwas_info)$name

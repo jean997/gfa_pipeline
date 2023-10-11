@@ -1,11 +1,9 @@
 library(dplyr)
 library(purrr)
 
-args <- commandArgs(trailingOnly=TRUE)
-X <- readRDS(args[1])
-p_thresh <- as.numeric(args[2])
-out_summ <- args[3]
-
+X <- readRDS(snakemake@input[["zmat"]])
+p_thresh <- as.numeric(snakemake@wildcards[["pt"]])
+out_summ <- snakemake@output[["summ"]]
 
 nms <- names(X)[grep(".z$", names(X))]
 n <- length(nms)
@@ -17,10 +15,10 @@ Z <-  X %>%
 pvals <- 2*pnorm(-abs(Z))
 
 dot_prds <- expand.grid(n1 = seq(n), n2 = seq(n)) %>%
-            filter(n1 <= n2) 
+            filter(n1 <= n2)
 
 prod <- apply(dot_prds, 1, function(x){
-                        ix <- which(pvals[,x[1]] > p_thresh & 
+                        ix <- which(pvals[,x[1]] > p_thresh &
                                     pvals[,x[2]] > p_thresh)
                         p <- Z[ix,x[1]]*Z[ix,x[2]]
                         s <- sum(p, na.rm=T)

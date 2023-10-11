@@ -1,11 +1,11 @@
 library(flashier)
 library(readr)
 
-args <- commandArgs(trailingOnly=TRUE)
-fit <- readRDS(args[1])
-n <- args[2]
-out <- args[3]
-sf <- args[4]
+fit <- readRDS(snakemake@input[[1]])
+n <- snakemake@wildcards[["n"]]
+out <- snakemake@output[["out"]]
+sf <- snakemake@params[["success_file"]]
+
 
 if(is.null(fit$fit$flash.fit$maxiter.reached)){
     statement <- paste0("Algorithm is converged after ", n, " rounds of backfitting.\n")

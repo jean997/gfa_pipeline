@@ -1,24 +1,24 @@
 # sum_stats is a csv file
-# neale_var_ref is only required if using files from the Neale lab round 2 2018 analysis
 input:
-    sum_stats: "weight_adiposity_traits.csv"
-    label: "weight_adiposity"
-    neale_var_ref: "/nfs/turbo/sph-jvmorr/gwas_summary_statistics/NealeRound2_2018/variants.tsv.bgz"
+    sum_stats: "my_traits.csv"
+    label: "my_label"
 
 analysis:
     # LD pruning options:
     # r2_thresh: threshold for pairwise r^2 between variants
     # clump_kb Maximum distance for pruning.
     # ref_path Path to plink format reference data
+    # ld_prioritization: either pvalue or rank
     ldprune:
         r2_thresh: 0.01
-        ld_seed: [0]
         clump_kb: [10000]
+        ld_priorization: ["pvalue", "rank"]
+        pvalue_threshold: 1e-3
         ref_path: "/nfs/turbo/sph-jvmorr/ld_reference_files/1kg_plink/EUR"
     # GFA options:
-    # gfa_params: If "default", will use default parameters, otherwise provide an R string with values, eg "list(max_iter = 5000)".
+    # gfa_params: If "default", will use default parameters, otherwise provide a .RDS file containing a prameter list eg "list(max_iter = 500)".
     # mode: Either "z-score" to use z-score or "b-std" to use standardized effect estimates.
-    # nmiss_thresh: Maximum number of missing studies per snp. Recomend 0.
+    # nmiss_thresh: Maximum number of missing studies per snp. Currently fixed at 0
     # max_snps: largest number of variants to allow
     # maxrep: If algorithm does not converge in maxiter iterations, the pipeline will try again this number of times. This allows restarting of non-converged fits.
     # est_L: currently unused
@@ -34,7 +34,7 @@ analysis:
     gfa_seed: [1]
     R:
         type: ["ldsc", "none", "ldsc_full"]
-        pthresh: "NA"
+        pthresh:
         l2_dir: "/nfs/turbo/sph-jvmorr/ld_reference_files/ldsc_reference_files/eur_w_ld_chr/"
 
 out:

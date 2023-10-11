@@ -6,13 +6,12 @@ library(readr)
 library(purrr)
 library(stringr)
 
-args <- commandArgs(trailingOnly=TRUE)
-c <- args[1]
-gwas_info_file <- args[2]
-dir <- args[3]
-nmiss_thresh <- args[4]
-out <- args[5]
-nm_out <- args[6]
+c <- snakemake@wildcards[["chrom"]]
+gwas_info_file <- snakemake@params[["gwas_info"]]
+dir <- snakemake@params[["d"]]
+nmiss_thresh <- as.numeric(snakemake@params[["nmiss_thresh"]])
+out <- snakemake@output[["out"]]
+
 
 info <- read_csv(gwas_info_file)
 
@@ -50,11 +49,11 @@ miss <- fulldat %>%
         is.na(.) %>%
         rowSums(.)
 
-nmiss <- data.frame(snp = fulldat$snp, miss = miss)
+#nmiss <- data.frame(snp = fulldat$snp, miss = miss)
 
 ix <- which(miss <= nmiss_thresh)
 
 saveRDS(fulldat[ix,], file=out)
 
-saveRDS(nmiss[ix,], file=nm_out)
+#saveRDS(nmiss[ix,], file=nm_out)
 

@@ -4,17 +4,15 @@ library(purrr)
 library(VariantAnnotation)
 library(gwasvcf)
 library(readr)
-library(bigsnpr)
+library(sumstatFactors)
 library(stringr)
 
 
-args <- commandArgs(trailingOnly=TRUE)
-f1 <- args[1]
-f2 <- args[2]
-l2_dir <- args[3]
-gwas_info <- read_csv(args[4])
-out <- args[5]
-
+f1 <- snakemake@input[["f1"]]
+f2 <- snakemake@input[["f2"]]
+l2_dir <- snakemake@params[["l2_dir"]]
+gwas_info <- read_csv(snakemake@params[["gwas_info"]])
+out <- snakemake@output[["out"]]
 
 ld <- purrr::map_dfr(1:22, function(c){
   read_table(paste0(l2_dir, c, ".l2.ldscore.gz"))
@@ -66,7 +64,7 @@ if(f1 == f2){
             dplyr::rename(SNP = rsid) %>%
             inner_join(., ld)
 
-  rg <- snp_ldsc_rg(ld_score = full_dat$L2,
+  rg <- ldsc_rg(ld_score = full_dat$L2,
                   ld_size = M,
                   sample_size_1 = ss1,
                   sample_size_2 = ss2,

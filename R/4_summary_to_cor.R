@@ -2,9 +2,9 @@ library(dplyr)
 library(purrr)
 library(LaplacesDemon)
 
-args <- commandArgs(trailingOnly=TRUE)
-out = args[1]
-files = args[-1]
+out = snakemake@output[["out"]]
+files = unlist(snakemake@input)
+
 
 x <- map(files, readRDS)
 

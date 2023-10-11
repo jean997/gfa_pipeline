@@ -6,61 +6,21 @@ library(gwasvcf)
 library(dplyr)
 library(magrittr)
 
-args <- commandArgs(trailingOnly=TRUE)
-data_file <- args[1]
-snp_name <- args[2]
-A1_name <- args[3]
-A2_name <- args[4]
-beta_hat_name <- args[5]
-se_name <- args[6]
-chrom_name <- args[7]
-pos_name <- args[8]
-p_value_name <- args[9]
-effect_is_or <- args[10]
-sample_size_name <- args[11]
-output_file <- args[12]
-neale_format <- as.logical(args[13])
-neale_var_ref <- args[14]
+data_file = snakemake@input[["raw_data"]]
+snp_name <- snakemake@params[["snp"]]
+A1_name <- snakemake@params[["A1"]]
+A2_name <- snakemake@params[["A2"]]
+beta_hat_name <- snakemake@params[["beta_hat"]]
+se_name <- snakemake@params[["se"]]
+chrom_name <- snakemake@params[["chrom"]]
+pos_name <- snakemake@params[["pos"]]
+p_value_name <- snakemake@params[["p_value"]]
+effect_is_or <- snakemake@params[["is_or"]]
+sample_size_name <- snakemake@params[["sample_size"]]
+output_file = snakemake@output[["out"]]
 
-cat(args[13], "\n")
-cat(neale_format, "\n")
 
-if(neale_format){
-    var_col_string <- "cols_only(variant='c', chr = 'c', pos = 'd', ref = 'c', alt = 'c', rsid = 'c', info = 'd', AF = 'd')"
-    var_ref <- read_tsv(neale_var_ref, col_types = eval(parse(text = var_col_string)))
-    var_ref <- var_ref %>%
-               filter(info > 0.9 & AF > 0.01 & AF < 0.99) %>%
-               select(variant, chr, pos, ref, alt, rsid)
-    X <- read_tsv(data_file)
-    X <- right_join(X, var_ref, by= "variant")
-    snp_name <- "rsid"
-    beta_hat_name <- "beta"
-    se_name <- "se"
-    chrom_name <- "chr"
-    pos_name <- "pos"
-    A1_name <- "alt"
-    A2_name <- "ref"
-    p_value_name <- "pval"
-    sample_size_name <- "n_complete_samples"
-    dat <- gwas_format(X, snp_name, beta_hat_name, se_name, A1_name,
-                       A2_name, chrom_name, pos_name,
-                       p_value = p_value_name,
-                       sample_size = sample_size_name,
-                       compute_pval = TRUE)
-    #remove non-snp
-    l2 <- str_length(dat$A2)
-    l2[is.na(l2)] <- 0
-    l1 <- str_length(dat$A1)
-    l1[is.na(l1)] <- 0
-    dat <- dat[l1==1 & l2==1,]
-
-    out <- dat %$% create_vcf( chrom=chrom, pos=pos,  nea=A2,
-                      ea=A1, snp=snp,
-                      effect=beta_hat,  se=se, pval=p_value, n=sample_size, name="a")
-    output_file <- str_replace(output_file, ".bgz$", "")
-    writeVcf(out, file=output_file, index=TRUE)
-
-}else if(str_ends(data_file, "vcf.gz") | str_ends(data_file, "vcf.bgz")){
+if(str_ends(data_file, "vcf.gz") | str_ends(data_file, "vcf.bgz")){
     #Harmonize strand in vcf to match cause format (A1 = A)
     # Note REF = A2, ALT = A1
     dat <- readVcf(data_file) %>%

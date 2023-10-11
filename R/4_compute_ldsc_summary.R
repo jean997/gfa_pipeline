@@ -2,10 +2,9 @@ library(dplyr)
 library(purrr)
 library(readr)
 
-args <- commandArgs(trailingOnly=TRUE)
-X <- readRDS(args[1])
-l2 <- read_table(args[2])
-out_summ <- args[3]
+X <- readRDS(snakemake@input[["zmat"]])
+l2 <- read_table(snakemake@input[["l2"]])
+out_summ <- snakemake@outptu[["summ"]]
 
 
 nms <- names(X)[grep(".z$", names(X))]
@@ -17,7 +16,7 @@ X <- select(l2, SNP, L2) %>%
 
 
 res <- expand.grid(n1 = seq(n), n2 = seq(n)) %>%
-            filter(n1 <= n2) 
+            filter(n1 <= n2)
 res$name1 <- nms[res$n1]
 res$name2 <- nms[res$n2]
 

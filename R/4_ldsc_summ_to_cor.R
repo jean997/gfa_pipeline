@@ -2,23 +2,23 @@ library(dplyr)
 library(purrr)
 library(LaplacesDemon)
 
-args <- commandArgs(trailingOnly=TRUE)
-out <-  args[1]
-files <-  args[-1]
+
+out <-  snakemake@output[["out"]]
+files <-  unlist(snakemake@input)
 
 
 
 df <- map(files, function(f){
-      readRDS(f) 
+      readRDS(f)
       }) %>%
   reduce(bind_rows)  %>%
       group_by(n1, n2) %>%
-      summarize(xtx = sum(xtx), 
-                xty = sum(xty), 
-                m = sum(m), 
-                ysum  = sum(ysum), 
-                xsum = sum(xsum)) %>% 
-      mutate(b1 = (xty - (xsum*ysum/m))/(xtx - ((xsum^2)/m)), 
+      summarize(xtx = sum(xtx),
+                xty = sum(xty),
+                m = sum(m),
+                ysum  = sum(ysum),
+                xsum = sum(xsum)) %>%
+      mutate(b1 = (xty - (xsum*ysum/m))/(xtx - ((xsum^2)/m)),
              b0 = (ysum/m) - b1*(xsum/m))
 
 

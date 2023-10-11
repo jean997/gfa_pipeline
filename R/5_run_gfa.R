@@ -3,16 +3,17 @@ library(purrr)
 library(stringr)
 library(sumstatFactors)
 
-args <- commandArgs(trailingOnly=TRUE)
 
-out <- args[1]
-mode <- args[2]
-R_est_file <- args[3]
-params_file <- args[4]
-max_snp <- args[5]
-seed <- as.numeric(args[6])
+out <- snakemake@output[["out"]]
+mode <- snakemake@wildcards[["mode"]]
+R_est_file <- snakemake@input[["R"]]
+params_file <- snakemake@params[["params_file"]]
+max_snp <- snakemake@params[["max_snps"]]
+seed <- snakemake@wildcards[["fs"]]
 
-nb_files = args[-c(1:6)]
+z_files = unlist(snakemake@input[["Z"]])
+
+
 
 set.seed(seed)
 
@@ -26,7 +27,7 @@ if(params_file == "default"){
 
 
 # Read in data
-X <- map_dfr(nb_files, readRDS)
+X <- map_dfr(z_files, readRDS)
 
 ntrait <- X %>%
           select(ends_with(".z")) %>%
