@@ -1,7 +1,7 @@
 # sum_stats is a csv file
 input:
-    sum_stats: "my_traits.csv"
-    label: "my_label"
+    sum_stats: "metabo.csv"
+    label: "metabo"
 
 analysis:
     # LD pruning options:
@@ -11,8 +11,8 @@ analysis:
     # ld_prioritization: either pvalue or rank
     ldprune:
         r2_thresh: 0.01
-        clump_kb: [10000]
-        ld_priorization: ["pvalue", "rank"]
+        clump_kb: [10000, 100]
+        ld_prioritization: ["pvalue", "rank"]
         pvalue_threshold: 1e-3
         ref_path: "/nfs/turbo/sph-jvmorr/ld_reference_files/1kg_plink/EUR"
     # GFA options:
@@ -31,10 +31,11 @@ analysis:
     max_snps: Inf
     maxrep: 5
     est_L: FALSE
-    gfa_seed: [1]
+    gfa_seed: 1
+    pvalue_threshold: [1, 1e-3]
     R:
-        type: ["ldsc", "none", "ldsc_full"]
-        pthresh:
+        type: ["ldsc", "none", "pt"] #, "ldsc_full"]
+        pthresh: [0.05]
         l2_dir: "/nfs/turbo/sph-jvmorr/ld_reference_files/ldsc_reference_files/eur_w_ld_chr/"
 
 out:
