@@ -1,4 +1,4 @@
-# Snakemake pipeline for analyzing gwas summary statistic data using flash
+# Snakemake pipeline for analyzing gwas summary statistic data using GFA
 #
 #
 # LICENSE: CC0. Do what you want with the code, but it has no guarantees.
@@ -17,7 +17,7 @@ import random
 import string
 from snakemake.utils import validate
 
-localrules: all, summ_to_cor, check_success, fail, final_flash
+localrules: all, summ_to_cor, check_success, fail, status, final_file, scale_pve
 ###### Load configuration file
 configfile: "config.yaml"
 #validate(config, schema="schemas/config.schema.yaml")
@@ -31,9 +31,10 @@ formatted_gwas_dir = config["out"]["formatted_gwas_dir"] # where formatted gwas 
 
 prefix = config["input"]["label"] + "_"
 
-gfa_strings = expand("{mode}_gfaseed{s}",
+gfa_strings = expand("{mode}_gfaseed{s}_{pv}",
                      mode = config["analysis"]["mode"],
-                     s = config["analysis"]["gfa_seed"])
+                     s = config["analysis"]["gfa_seed"], 
+                     pv = config["analysis"]["pvalue_threshold"])
 
 ld_strings = expand("r2{r2}_kb{kb}_{p}",
                     r2 = config["analysis"]["ldprune"]["r2_thresh"],
@@ -48,11 +49,14 @@ else:
 if "ldsc" in config["analysis"]["R"]["type"]:
     R_strings.append("ldsc")
 
+if "ldsc_full" in config["analysis"]["R"]["type"]:
+    R_strings.append("ldsc_full")
+
 if "none" in config["analysis"]["R"]["type"]:
     R_strings.append("none")
 
 
-inp = expand(out_dir + prefix + "status_{gfas}.ldpruned_{lds}.R_{rs}.txt",
+inp = expand(out_dir + prefix + "gfa_{gfas}.ldpruned_{lds}.R_{rs}.scaled.RDS",
                 gfas = gfa_strings,
                 lds = ld_strings,
                 rs = R_strings)
@@ -92,11 +96,15 @@ rule snp_table_chrom:
 
 # LD prune with plink
 # LD prune prioritizing snps with less missingness
+#ld_pt = max(config["analysis"]["pvalue_threshold"])
+ld_pt = 1
+
 rule ld_prune_plink:
     input: zmat = data_dir + prefix + "zmat.{chrom}.RDS",
            bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed"
     output: out = data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
-    params: ref_path = config["analysis"]["ldprune"]["ref_path"]
+    params: ref_path = config["analysis"]["ldprune"]["ref_path"], 
+            pthresh = ld_pt
     wildcard_constraints: chrom = "\d+"
     script: 'R/3_ld_prune_chrom_plink.R'
 
@@ -183,7 +191,7 @@ def R_input(wcs):
 rule run_gfa:
     input: Z = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23)),
            R = R_input
-    output:  out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.1.RDS",
+    output:  out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.1.RDS",
     params: params_file = config["analysis"]["gfa_params"],
             max_snps = config["analysis"]["max_snps"]
     script: 'R/5_run_gfa.R'
@@ -192,11 +200,11 @@ rule run_gfa:
 def refit_input(wcs):
     n = int(wcs.n)
     oldn = str(n-1)
-    return f'{out_dir}{prefix}gfa_{wcs.mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.{oldn}.RDS'
+    return f'{out_dir}{prefix}gfa_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.{oldn}.RDS'
 
 rule refit_gfa:
     input:  refit_input
-    output: out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.RDS",
+    output: out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.RDS",
     params: params_file = config["analysis"]["gfa_params"]
     script: 'R/5_refit_gfa.R'
 
@@ -209,37 +217,59 @@ def next_input(wcs):
     global out_dir
     global prefix
 
-    check_prefix = f'{prefix}check_{wcs.mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.'
+    check_prefix = f'{prefix}check_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.'
     check_files = [y for y in os.listdir(out_dir) if y.startswith(check_prefix) ]
-    flash_tries = len(check_files) + 1
+    n_tries = len(check_files) + 1
 
-    success_file = f'{out_dir}{prefix}success_{wcs.mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.txt'
-    fail_file = f'{out_dir}{prefix}fail_{wcs.mode}_gfaseed{wcs.fs}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.txt'
+    success_file = f'{out_dir}{prefix}success_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.txt'
+    fail_file = f'{out_dir}{prefix}fail_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.txt'
     #return fail_file
     if os.path.exists(success_file):
         return success_file
-    elif flash_tries > max_gfa_tries:
+    elif n_tries > max_gfa_tries:
         return fail_file
     else:
-        checkpoints.check_success.get(n=flash_tries, **wcs)
+        checkpoints.check_success.get(n=n_tries, **wcs)
+
+def final_rds(wcs):
+    global out_dir
+    global prefix
+
+    check_prefix = f'{prefix}check_{wcs.analysis}'
+    check_files = [y for y in os.listdir(out_dir) if y.startswith(check_prefix) ]
+    n_tries = len(check_files)
+    final_gfa_file = f'{out_dir}{prefix}gfa_{wcs.analysis}.{n_tries}.RDS'
+    return final_gfa_file
 
 checkpoint check_success:
-    input: out_dir + prefix + "gfa_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.RDS"
-    output: out = out_dir + prefix + "check_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.txt",
-    params: success_file = out_dir + prefix + 'success_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt'
+    input: out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.RDS"
+    output: out_check = out_dir + prefix + "check_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.txt"
+    params: success_file = out_dir + prefix + 'success_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt'
     wildcard_constraints: n = "\d+"
     script: "R/5_check_gfa.R"
 
 rule fail:
-    output: out_dir + prefix + 'fail_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt'
+    output: out_dir + prefix + 'fail_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt'
     wildcard_constraints:  n = "\d+"
     params: max_tries = max_gfa_tries
     shell: "echo  Model not converged after {params.max_tries} rounds of {maxiter} iterations. > {output} "
 
-rule final_flash:
-    input: next_input
-    output: out = out_dir + prefix + "status_{mode}_gfaseed{fs}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt",
-    shell: "cp {input} {output}"
+rule status:
+    input:  next_input 
+    output: out = out_dir + prefix + "status_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt",
+    shell: "cp {input} {output.out}"
+
+rule final_file:
+    input: status_file = out_dir + prefix + "status_{analysis}.txt",
+    output: out_rds = out_dir + prefix + "gfa_{analysis}.final.RDS"
+    params: rds = final_rds 
+    shell: "mv {params.rds} {output.out_rds}"
+
+rule scale_pve:
+    input: in_rds =  out_dir + prefix + "gfa_{mode}_gfaseed{str}.final.RDS" 
+    output: out = out_dir + prefix + "gfa_{mode}_gfaseed{str}.scaled.RDS"
+    params: gwas_info = config["input"]["sum_stats"]
+    script: "R/6_scale_pve.R"
 
 #rule estimate_L:
 #    input: inp = out_dir + prefix + "fit_{key}.RDS", zmat = data_dir + prefix + "zmat.{chrom}.RDS"

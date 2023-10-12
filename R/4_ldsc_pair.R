@@ -22,8 +22,9 @@ M <- purrr:::map(1:22, function(c){
   read_lines(paste0(l2_dir, c, ".l2.M_5_50"))
 }) %>% unlist() %>% as.numeric() %>% sum()
 
-
-set_bcftools()
+#bpath <- system("which bcftools", intern  = TRUE)
+bpath <- "/sw/spack/bio/pkgs/gcc-10.3.0/bcftools/1.12-g4b275ez/bin/bcftools"
+set_bcftools(bpath)
 
 d1 <- query_gwas(vcf = f1, chrompos = paste0(ld$CHR, ":", ld$BP)) %>% vcf_to_tibble()
 ss1 <- median(d1$SS)

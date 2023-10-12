@@ -8,8 +8,9 @@ out <- snakemake@output[["out"]]
 mode <- snakemake@wildcards[["mode"]]
 R_est_file <- snakemake@input[["R"]]
 params_file <- snakemake@params[["params_file"]]
-max_snp <- snakemake@params[["max_snps"]]
+max_snp <- as.numeric(snakemake@params[["max_snps"]])
 seed <- snakemake@wildcards[["fs"]]
+pthresh <- as.numeric(snakemake@wildcards[["pv"]])
 
 z_files = unlist(snakemake@input[["Z"]])
 
@@ -33,11 +34,20 @@ ntrait <- X %>%
           select(ends_with(".z")) %>%
           ncol()
 
+Z_hat <- X %>%
+         select(ends_with(".z")) %>%
+         as.matrix()
+if(pthresh < 1){
+    zmax <- apply(abs(Z_hat), 1, function(x){max(x, na.rm=T)})
+    pmin <- 2*pnorm(-abs(zmax))
+    ix <- which(pmin < pthresh)
+    X <- X[ix,]
+}
+
 if(nrow(X) > max_snp){
     ix <- sample(seq(nrow(X)), size = max_snp, replace = FALSE)
     X <- X[ix,]
 }
-
 
 Z_hat <- X %>%
          select(ends_with(".z")) %>%
@@ -65,17 +75,17 @@ if(str_ends(R_est_file, "none_R.txt")){
 
 
 if(mode == "z-score"){
-  f <- gfa_fit(Z_hat = Z_hat, R = R$R, params = params)
+  t <- system.time(f <- gfa_fit(Z_hat = Z_hat, R = R$R, params = params))
   N <- apply(SS, 2, median)
   f$F_hat_scaled <- t(t(f$F_hat)/sqrt(N))
 }else{
   N <- apply(SS, 2, median)
   B_std <- t( t(Z_hat)/sqrt(N))
-  f <- gfa_fit(B_std = B_std, N = N, R = R$R, params = params)
+  t <- system.time(f <- gfa_fit(B_std = B_std, N = N, R = R$R, params = params))
 }
 
 f$snps <- snps
 f$names <- R$names
-
+f$time <- t
 saveRDS(f, file=out)
 

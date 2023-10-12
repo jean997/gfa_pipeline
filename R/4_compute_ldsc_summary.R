@@ -4,7 +4,7 @@ library(readr)
 
 X <- readRDS(snakemake@input[["zmat"]])
 l2 <- read_table(snakemake@input[["l2"]])
-out_summ <- snakemake@outptu[["summ"]]
+out_summ <- snakemake@output[["summ"]]
 
 
 nms <- names(X)[grep(".z$", names(X))]

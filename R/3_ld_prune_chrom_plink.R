@@ -2,11 +2,12 @@ library(dplyr)
 library(ieugwasr)
 
 X <- readRDS(snakemake@input[["zmat"]])
-r2_thresh <- snakemake@wildcards[["r2_thresh"]]
+r2_thresh <- as.numeric(snakemake@wildcards[["r2_thresh"]])
 clump_kb <- snakemake@wildcards[["kb"]]
 ref_path  <- snakemake@params[["ref_path"]]
 out <- snakemake@output[["out"]]
 p <- snakemake@wildcards[["p"]]
+pthresh <- as.numeric(snakemake@params[["pthresh"]])
 
 if(!p %in% c("pvalue", "rank")){
   stop("Unknown prioritization option.\n")
@@ -34,7 +35,7 @@ dat <- data.frame(rsid = X$snp, pval = myp)
 
 dat_clump <- ld_clump(dat = dat,
                      clump_r2 = r2_thresh,
-                     clump_p = 1,
+                     clump_p = pthresh,
                      clump_kb = clump_kb,
                      plink_bin = genetics.binaRies::get_plink_binary(),
                      bfile = ref_path)
