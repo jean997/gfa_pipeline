@@ -69,6 +69,7 @@ if(str_ends(R_est_file, "none_R.txt")){
   z_order <- match(R$names, nms)
   SS <- SS[,z_order]
   Z_hat <- Z_hat[,z_order]
+  R$R <- cov2cor(R)
 }
 
 
