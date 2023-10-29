@@ -63,35 +63,18 @@ inp = expand(out_dir + prefix + "gfa_{gfas}.ldpruned_{lds}.R_{rs}.scaled.RDS",
 
 rule all:
     input: inp
-
-# convert data to standardized format and harmonize
-rule format:
-    input: raw_data  = lambda wildcards: ss[ss['name'] == wildcards.name]['raw_data_path'].tolist()[0]
-    output: out = formatted_gwas_dir + "{name}.vcf.bgz"
-    params:
-        snp = lambda wildcards: ss[ss['name'] == wildcards.name]['snp'].tolist()[0],
-        A1 = lambda wildcards: ss[ss['name'] == wildcards.name]['A1'].tolist()[0],
-        A2 = lambda wildcards: ss[ss['name'] == wildcards.name]['A2'].tolist()[0],
-        beta_hat = lambda wildcards: ss[ss['name'] == wildcards.name]['beta_hat'].tolist()[0],
-        se = lambda wildcards: ss[ss['name'] == wildcards.name]['se'].tolist()[0],
-        chrom = lambda wildcards: ss[ss['name'] == wildcards.name]['chrom'].tolist()[0],
-        pos = lambda wildcards: ss[ss['name'] == wildcards.name]['pos'].tolist()[0],
-        p_value = lambda wildcards: ss[ss['name'] == wildcards.name]['p_value'].tolist()[0],
-        sample_size = lambda wildcards: ss[ss['name'] == wildcards.name]['sample_size'].tolist()[0],
-        is_or = lambda wildcards: ss[ss['name'] ==wildcards.name]['effect_is_or'].tolist()[0]
-    script: 'R/1_format_data.R'
+    #input: "data/bc_zmat.22.RDS"
 
 # This produces one data frame per chromosome with columns for snp info
 # and columns <study>.z, <study>.ss for z-score and sample size of each snp
 # The nmiss file has two columns, one for snp one for number of missing studies.
 rule snp_table_chrom:
-    input: files = expand(formatted_gwas_dir + "{name}.vcf.bgz", name = ss['name'])
+    input: files = ss['raw_data_path'], gwas_info = config["input"]["sum_stats"]
     output: out =  data_dir + prefix + "zmat.{chrom}.RDS"
-    params: gwas_info = config["input"]["sum_stats"],
-            d = formatted_gwas_dir,
-            nmiss_thresh = config["analysis"]["nmiss_thresh"]
+    params: nmiss_thresh = config["analysis"]["nmiss_thresh"],
+            af_thresh = config["analysis"]["af_thresh"]
     wildcard_constraints: chrom = "\d+"
-    script: 'R/2_combine_data_vcf.R'
+    script: 'R/1_combine_and_format.R'
 
 
 # LD prune with plink

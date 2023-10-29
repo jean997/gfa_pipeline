@@ -37,10 +37,10 @@ if(mode == "z-score"){
 }
 ss <- data.frame(name = info$name, ss = samplesize)
 s <- ss$ss[match(str_replace(fit$name, ".z", ""), ss$name)]
-F_scale <- t(t(fit$F_hat)/sqrt(s))
+F_scale <- fit$F_hat/s
 F_scale <- apply(F_scale, 2, function(f){ f/sqrt(sum(f^2))})
 fit$F_hat_effect_scale <- F_scale
-fit$sample_size <- s
+
 fit$pve <- sumstatFactors:::pve_by_trait(Lhat=fit$L_hat, Fhat=fit$F_hat, tau=fit$fit$flash_fit$tau, sample_size=s)
 
 

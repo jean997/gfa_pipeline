@@ -77,8 +77,8 @@ if(str_ends(R_est_file, "none_R.txt")){
 
 if(mode == "z-score"){
   t <- system.time(f <- gfa_fit(Z_hat = Z_hat, R = R$R, params = params))
-  #N <- apply(SS, 2, median)
-  #f$F_hat_scaled <- t(t(f$F_hat)/sqrt(N))
+  N <- apply(SS, 2, median)
+  f$F_hat_scaled <- t(t(f$F_hat)/sqrt(N))
 }else{
   N <- apply(SS, 2, median)
   B_std <- t( t(Z_hat)/sqrt(N))

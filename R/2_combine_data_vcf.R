@@ -10,6 +10,7 @@ c <- snakemake@wildcards[["chrom"]]
 gwas_info_file <- snakemake@params[["gwas_info"]]
 dir <- snakemake@params[["d"]]
 nmiss_thresh <- as.numeric(snakemake@params[["nmiss_thresh"]])
+af_thesh <- as.numeric(snakemake@params[["af_thresh"]])
 out <- snakemake@output[["out"]]
 
 
@@ -25,6 +26,7 @@ fulldat <- map(seq(nrow(info)),   function(i){
                         z_name <- as_name(paste0(n, ".z"))
                         ss_name <- as_name(paste0(n, ".ss"))
                         dat <- vcf_to_tibble(v) %>%
+                                dplyr::filter(AF > af_thresh & AF < (1-af_thresh)) %>% 
                                 dplyr::rename(snp=rsid) %>%
                                 dplyr::mutate(Z  = ES/SE) %>%
                                 dplyr::select(chr:=seqnames,  snp, REF, ALT, #start, Z, SS)

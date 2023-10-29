@@ -27,6 +27,16 @@ bpath <- "/sw/spack/bio/pkgs/gcc-10.3.0/bcftools/1.12-g4b275ez/bin/bcftools"
 set_bcftools(bpath)
 
 d1 <- query_gwas(vcf = f1, chrompos = paste0(ld$CHR, ":", ld$BP)) %>% vcf_to_tibble()
+
+
+if(str_ends(f1, "vcf.gz") | str_ends(f1, "vcf.bgz")){
+    d1 <- purrr::map_dfr(1:22, function(c){
+                    dat <- format_ieu_chrom(f, c, 0)
+}else{
+
+}
+
+
 ss1 <- median(d1$SS)
 if(is.na(ss1)){
     i <- which(str_detect(f1, gwas_info$name))
