@@ -16,7 +16,7 @@ out <- snakemake@output[["out"]]
 
 
 info <- read_csv(gwas_info_file)
-if(!af %in% names(info)) info$af <- NA
+if(!"af" %in% names(info)) info$af <- NA
 
 fulldat <- map(seq(nrow(info)),   function(i){
                         f <- info$raw_data_path[i]
@@ -44,7 +44,7 @@ fulldat <- map(seq(nrow(info)),   function(i){
 
                         dat$sample_size[is.na(dat$sample_size)] <- as.numeric(info$pub_sample_size)
                         dat <-dat %>%  mutate(Z = beta_hat/se) %>%
-                               rename(REF = A2, ALT = A1) %>% 
+                               rename(REF = A2, ALT = A1) %>%
                                select(chrom, snp, REF, ALT,
                                               !!pos_name := pos,
                                               !!z_name := Z,
