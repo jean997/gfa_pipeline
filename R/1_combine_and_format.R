@@ -12,11 +12,14 @@ c <- as.numeric(snakemake@wildcards[["chrom"]])
 gwas_info_file <- snakemake@input[["gwas_info"]]
 nmiss_thresh <- as.numeric(snakemake@params[["nmiss_thresh"]])
 af_thresh <- as.numeric(snakemake@params[["af_thresh"]])
+sample_size_tol <- as.numeric(snakemake@params[["sample_size_tol"]])
 out <- snakemake@output[["out"]]
 
 
 info <- read_csv(gwas_info_file)
-if(!"af" %in% names(info)) info$af <- NA
+if(!"af" %in% names(info)){
+    info$af <- NA
+}
 
 fulldat <- map(seq(nrow(info)),   function(i){
                         f <- info$raw_data_path[i]
@@ -37,6 +40,10 @@ fulldat <- map(seq(nrow(info)),   function(i){
                                                      as.logical(info$effect_is_or[i]))
                         }
 
+                        if(is.finite(sample_size_tol)){
+                           m <- median(dat$sample_size)
+                           dat <- filter(dat, sample_size > (1-sample_size_tol)*m & sample_size < (1 + sample_size_tol)*m)
+                        }
                         n <- info$name[i]
                         pos_name <- as_name(paste0(n, ".pos"))
                         z_name <- as_name(paste0(n, ".z"))
@@ -44,7 +51,7 @@ fulldat <- map(seq(nrow(info)),   function(i){
 
                         dat$sample_size[is.na(dat$sample_size)] <- as.numeric(info$pub_sample_size)
                         dat <-dat %>%  mutate(Z = beta_hat/se) %>%
-                               rename(REF = A2, ALT = A1) %>%
+                               rename(REF = A2, ALT = A1) %>% 
                                select(chrom, snp, REF, ALT,
                                               !!pos_name := pos,
                                               !!z_name := Z,
