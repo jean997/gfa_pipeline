@@ -10,7 +10,7 @@ source("R/format_ieu_chrom.R")
 
 c <- as.numeric(snakemake@wildcards[["chrom"]])
 gwas_info_file <- snakemake@input[["gwas_info"]]
-nmiss_thresh <- as.numeric(snakemake@params[["nmiss_thresh"]])
+#nmiss_thresh <- as.numeric(snakemake@params[["nmiss_thresh"]])
 af_thresh <- as.numeric(snakemake@params[["af_thresh"]])
 sample_size_tol <- as.numeric(snakemake@params[["sample_size_tol"]])
 out <- snakemake@output[["out"]]
@@ -51,7 +51,7 @@ fulldat <- map(seq(nrow(info)),   function(i){
 
                         dat$sample_size[is.na(dat$sample_size)] <- as.numeric(info$pub_sample_size)
                         dat <-dat %>%  mutate(Z = beta_hat/se) %>%
-                               rename(REF = A2, ALT = A1) %>% 
+                               rename(REF = A2, ALT = A1) %>%
                                select(chrom, snp, REF, ALT,
                                               !!pos_name := pos,
                                               !!z_name := Z,
@@ -74,7 +74,8 @@ miss <- fulldat %>%
 
 #nmiss <- data.frame(snp = fulldat$snp, miss = miss)
 
-ix <- which(miss <= nmiss_thresh)
+#ix <- which(miss <= nmiss_thresh)
+ix <- which(miss == 0)
 
 saveRDS(fulldat[ix,], file=out)
 

@@ -1,6 +1,5 @@
 library(dplyr)
 library(purrr)
-library(LaplacesDemon)
 
 out = snakemake@output[["out"]]
 files = unlist(snakemake@input)
@@ -31,13 +30,17 @@ cov_mat <- bind_rows(df, df_copy)  %>%
            reshape2::dcast(n1 ~ n2)
 
 nms <- cov_mat$n1
-R <- as.matrix(cov_mat[,-1]) %>%
-     cov2cor() %>%
-     as.symmetric.matrix() # Somehow cov2cor generates a matrix that is slightly non-symmetric
+R <- as.matrix(cov_mat[,-1])
+## no cov2cor needed, should already be correlation matrix
 
-eS <- eigen(R)
+vals <- eigen(R, only.values = TRUE)
+if(any(vals) < 0){
+  R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3)$mat |> as.matrix()
+}
 
-ret <- list(R = R, names = nms, eS = eS)
+#eS <- eigen(R)
+
+ret <- list(R = R, names = nms,) # eS = eS)
 
 saveRDS(ret, file=out)
 

@@ -4,7 +4,7 @@ library(readr)
 
 
 out <- snakemake@output[["out"]]
-gwas_info <- snakemake@params[["gwas_info"]]
+gwas_info <- snakemake@input[["gwas_info"]]
 root <- snakemake@params[["root"]]
 
 
@@ -30,11 +30,15 @@ cov_mat <- df %>%
 
 nms <- paste0(as.vector(cov_mat$n1), ".z")
 R <- as.matrix(cov_mat[,-1])
+R <- cov2cor(R)
 
-R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3) %>% with(., as.matrix(mat));
+vals <- eigen(R, only.values = TRUE)
+if(any(vals) < 0){
+  R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3)$mat |> as.matrix()
+}
 
-eS <- eigen(R)
+#eS <- eigen(R)
 
-ret <- list(R = R, names = nms, eS = eS)
+ret <- list(R = R, names = nms) #, eS = eS)
 
 saveRDS(ret, file=out)

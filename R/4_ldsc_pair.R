@@ -5,12 +5,10 @@ library(sumstatFactors)
 library(stringr)
 
 
-#f1 <- snakemake@input[["f1"]]
-#f2 <- snakemake@input[["f2"]]
 t1 <- snakemake@wildcards[["name1"]]
 t2 <- snakemake@wildcards[["name2"]]
 l2_dir <- snakemake@params[["l2_dir"]]
-gwas_info <- read_csv(snakemake@params[["gwas_info"]])
+gwas_info <- read_csv(snakemake@input[["gwas_info"]])
 z_files = unlist(snakemake@input[["Z"]])
 out <- snakemake@output[["out"]]
 

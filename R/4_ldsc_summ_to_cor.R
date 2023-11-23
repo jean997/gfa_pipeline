@@ -1,6 +1,5 @@
 library(dplyr)
 library(purrr)
-library(LaplacesDemon)
 
 
 out <-  snakemake@output[["out"]]
@@ -32,10 +31,17 @@ cov_mat <- bind_rows(df, df_copy)  %>%
            reshape2::dcast(n1 ~ n2)
 
 nms <- cov_mat$n1
-R <- as.matrix(cov_mat[,-1])   %>% as.positive.definite()
-eS <- eigen(R)
+R <- as.matrix(cov_mat[,-1])
+R <- cov2cor(R)
 
-ret <- list(R = R, names = nms, eS = eS)
+vals <- eigen(R, only.values = TRUE)
+if(any(vals) < 0){
+  R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3)$mat |> as.matrix()
+}
+
+#eS <- eigen(R)
+
+ret <- list(R = R, names = nms) #, eS = eS)
 
 saveRDS(ret, file=out)
 

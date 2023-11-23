@@ -18,13 +18,5 @@ fit0 <- readRDS(inp)
 
 new_fit <- gfa_rebackfit(fit = fit0$fit,
                          params = fit0$params)
-if(is.null(new_fit$fit$flash.fit$maxiter.reached)){
-    fit1 <- gfa_wrapup(new_fit$fit, nullcheck = TRUE)
-    fit1$params <- fit0$params
-    fit1$sample_size <- fit0$sample_size
-}else{
-    fit1 <- new_fit
-    fit1$sample_size <- fit0$sample_size
-}
 
-saveRDS(fit1, outp)
+saveRDS(new_fit, outp)

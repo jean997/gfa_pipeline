@@ -31,10 +31,10 @@ formatted_gwas_dir = config["out"]["formatted_gwas_dir"] # where formatted gwas 
 
 prefix = config["input"]["label"] + "_"
 
-gfa_strings = expand("{mode}_gfaseed{s}_{pv}",
+gfa_strings = expand("{mode}_gfaseed{s}_{method}",
                      mode = config["analysis"]["mode"],
-                     s = config["analysis"]["gfa_seed"], 
-                     pv = config["analysis"]["pvalue_threshold"])
+                     s = config["analysis"]["gfa_seed"],
+                     method = config["analysis"]["method"])
 
 ld_strings = expand("r2{r2}_kb{kb}_{p}",
                     r2 = config["analysis"]["ldprune"]["r2_thresh"],
@@ -42,19 +42,23 @@ ld_strings = expand("r2{r2}_kb{kb}_{p}",
                     p = config["analysis"]["ldprune"]["ld_prioritization"])
 
 if "pt" in config["analysis"]["R"]["type"]:
-    R_strings = expand("pt{pt}", pt = config["analysis"]["R"]["pthresh"])
+    R_type = expand("pt{pt}_cc{cc}", 
+                       pt = config["analysis"]["R"]["pthresh"])
 else:
-    R_strings = []
+    R_type = []
 
 if "ldsc" in config["analysis"]["R"]["type"]:
-    R_strings.append("ldsc")
+    R_type.append("ldsc")
 
-if "ldsc_full" in config["analysis"]["R"]["type"]:
-    R_strings.append("ldsc_full")
+if "ldsc_quick" in config["analysis"]["R"]["type"]:
+    R_type.append("ldsc_quick")
 
 if "none" in config["analysis"]["R"]["type"]:
-    R_strings.append("none")
+    R_type.append("none")
 
+R_strings = expand("{rt}_cc{cc}",
+                   rt = R_type,
+                   cc = config["analysis"]["R"]["cor_clust"])
 
 inp = expand(out_dir + prefix + "gfa_{gfas}.ldpruned_{lds}.R_{rs}.final.RDS",
                 gfas = gfa_strings,
@@ -63,42 +67,37 @@ inp = expand(out_dir + prefix + "gfa_{gfas}.ldpruned_{lds}.R_{rs}.final.RDS",
 
 rule all:
     input: inp
-    #input: "data/bc_zmat.22.RDS"
 
 # This produces one data frame per chromosome with columns for snp info
 # and columns <study>.z, <study>.ss for z-score and sample size of each snp
-# The nmiss file has two columns, one for snp one for number of missing studies.
 rule snp_table_chrom:
     input: files = ss['raw_data_path'], gwas_info = config["input"]["sum_stats"]
     output: out =  data_dir + prefix + "zmat.{chrom}.RDS"
-    params: nmiss_thresh = config["analysis"]["nmiss_thresh"],
-            af_thresh = config["analysis"]["af_thresh"],
+    #params: #nmiss_thresh = config["analysis"]["nmiss_thresh"],
+    params: af_thresh = config["analysis"]["af_thresh"],
             sample_size_tol = config["analysis"]["sample_size_tol"]
     wildcard_constraints: chrom = "\d+"
     script: 'R/1_combine_and_format.R'
 
 
 # LD prune with plink
-# LD prune prioritizing snps with less missingness
-#ld_pt = max(config["analysis"]["pvalue_threshold"])
-ld_pt = 1
+# LD prune prioritizing snps either by min p-value or  min rank
 
 rule ld_prune_plink:
     input: zmat = data_dir + prefix + "zmat.{chrom}.RDS",
            bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed"
     output: out = data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
-    params: ref_path = config["analysis"]["ldprune"]["ref_path"], 
-            pthresh = ld_pt
+    params: ref_path = config["analysis"]["ldprune"]["ref_path"],
+            pthresh = 1
     wildcard_constraints: chrom = "\d+"
     script: 'R/3_ld_prune_chrom_plink.R'
 
 
 ## Estimate R
-# We can compute the p-thresholded R matrix without ever reading in all of the data
-# We first compute per chromosome summaries and the compute R
-# There is an LD score version of this but it does not update the weights and so it has higher variance
-# than the published version
-# Finally there is the full LD score version
+
+# For p-value threshold and ldsc_quick methods, we can compute R 
+# without ever reading in all of the data.
+# For ldsc method, we need to run ldsc for each pair of traits first.
 
 ####p-value threshold method
 
@@ -113,7 +112,7 @@ rule summ_to_cor:
     output: out = data_dir + prefix + "R_estimate.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.RDS"
     script: "R/4_summary_to_cor.R"
 
-###ldsc without updated weights
+###ldsc without updated weights "ldsc_quick"
 
 l2_dir = config["analysis"]["R"]["l2_dir"]
 rule score_summ_ldsc:
@@ -125,24 +124,24 @@ rule score_summ_ldsc:
 
 rule summ_to_ldsc_cov:
     input: expand(data_dir + prefix + "zmat_ldsc_summary.{chrom}.RDS", chrom = range(1, 23))
-    output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
+    output: out = data_dir + prefix + "R_estimate.R_ldsc_quick.RDS"
     script: "R/4_ldsc_summ_to_cor.R"
 
 ### None
 rule none_R:
+    input: gwas_info = config["input"]["sum_stats"]
     output: out = data_dir + "none_R.txt"
-    shell: "touch {output.out}"
+    shell: 'R/4_R_none.R'
 
 
 ### Full LDSC compute by pair
-# M doesn't matter so this could be modified to leave it out.
 rule ldsc_rg_pair:
     input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
-           m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23))
+           m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)), 
+           gwas_info = config["input"]["sum_stats"]
     output: out =  data_dir + prefix + "ldsc.{name1}__{name2}.RDS"
-    params: gwas_info = config["input"]["sum_stats"],
-            l2_dir = l2_dir
+    params: l2_dir = l2_dir
     script: 'R/4_ldsc_pair.R'
 
 
@@ -150,11 +149,16 @@ name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumera
 
 rule R_ldsc_full:
     input: data = expand(data_dir + prefix + "ldsc.{np[0]}__{np[1]}.RDS", np = name_pairs),
-           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
-    output: out = data_dir + prefix + "R_estimate.R_ldsc_full.RDS"
-    params: gwas_info = config["input"]["sum_stats"], root = data_dir + prefix
+           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)), 
+           gwas_info = config["input"]["sum_stats"]
+    output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
+    params: root = data_dir + prefix
     script: 'R/4_R_ldsc_full.R'
 
+rule cor_clust:
+    input: R = "{rfile}.RDS"
+    output: out = "{rfile}_cc{cc}.RDS"
+    script: 'R/4_R_corclust.R'
 # Run GFA
 #
 
@@ -165,8 +169,8 @@ def R_input(wcs):
         return f'{data_dir}{prefix}R_estimate.R_ldsc.RDS'
     elif wcs.Rtype == "none":
         return f'{data_dir}none_R.txt'
-    elif wcs.Rtype == "ldsc_full":
-        return f'{data_dir}{prefix}R_estimate.R_ldsc_full.RDS'
+    elif wcs.Rtype == "ldsc_quick":
+        return f'{data_dir}{prefix}R_estimate.R_ldsc_quick.RDS'
     else:
         return f'{data_dir}{prefix}R_estimate.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.RDS'
 
@@ -174,7 +178,7 @@ def R_input(wcs):
 rule run_gfa:
     input: Z = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23)),
            R = R_input
-    output:  out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.1.RDS",
+    output:  out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{method}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.1.RDS",
     params: params_file = config["analysis"]["gfa_params"],
             max_snps = config["analysis"]["max_snps"]
     script: 'R/5_run_gfa.R'
@@ -238,23 +242,13 @@ rule fail:
     shell: "echo  Model not converged after {params.max_tries} rounds of {maxiter} iterations. > {output} "
 
 rule status:
-    input:  next_input 
+    input:  next_input
     output: out = out_dir + prefix + "status_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt",
     shell: "cp {input} {output.out}"
 
 rule final_file:
     input: status_file = out_dir + prefix + "status_{analysis}.txt",
     output: out_rds = out_dir + prefix + "gfa_{analysis}.final.RDS"
-    params: rds = final_rds 
+    params: rds = final_rds
     shell: "mv {params.rds} {output.out_rds}"
 
-rule scale_pve:
-    input: in_rds =  out_dir + prefix + "gfa_{mode}_gfaseed{str}.final.RDS" 
-    output: out = out_dir + prefix + "gfa_{mode}_gfaseed{str}.scaled.RDS"
-    params: gwas_info = config["input"]["sum_stats"]
-    script: "R/6_scale_pve.R"
-
-#rule estimate_L:
-#    input: inp = out_dir + prefix + "fit_{key}.RDS", zmat = data_dir + prefix + "zmat.{chrom}.RDS"
-#    output: out = out_dir + prefix + "estL_{key}.{chrom}.RDS"
-#    shell: "Rscript R/7_estimate_L.R {input.inp} {input.zmat} {output.out}"

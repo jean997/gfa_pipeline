@@ -10,7 +10,7 @@ R_est_file <- snakemake@input[["R"]]
 params_file <- snakemake@params[["params_file"]]
 max_snp <- as.numeric(snakemake@params[["max_snps"]])
 seed <- snakemake@wildcards[["fs"]]
-pthresh <- as.numeric(snakemake@wildcards[["pv"]])
+method <- snakemake@wildcards[["method"]]
 
 z_files = unlist(snakemake@input[["Z"]])
 
@@ -37,12 +37,7 @@ ntrait <- X %>%
 Z_hat <- X %>%
          select(ends_with(".z")) %>%
          as.matrix()
-if(pthresh < 1){
-    zmax <- apply(abs(Z_hat), 1, function(x){max(x, na.rm=T)})
-    pmin <- 2*pnorm(-abs(zmax))
-    ix <- which(pmin < pthresh)
-    X <- X[ix,]
-}
+
 
 if(nrow(X) > max_snp){
     ix <- sample(seq(nrow(X)), size = max_snp, replace = FALSE)
@@ -61,30 +56,28 @@ snps <- X$snp
 
 nms <- names(X)[grep(".z$", names(X))]
 
-if(str_ends(R_est_file, "none_R.txt")){
-  R <- list(names = nms, R = diag(length(nms)))
-}else{
-  R <- readRDS(R_est_file)
-  stopifnot(all(R$names %in% nms))
-  z_order <- match(R$names, nms)
-  SS <- SS[,z_order]
-  Z_hat <- Z_hat[,z_order]
-  R$R <- cov2cor(R$R)
-}
+# if(str_ends(R_est_file, "none_R.txt")){
+#   R <- list(names = nms, R = diag(length(nms), nrow = ntrait))
+# }else{
+R <- readRDS(R_est_file)
+stopifnot(all(R$names %in% nms))
+z_order <- match(R$names, nms)
+SS <- SS[,z_order]
+Z_hat <- Z_hat[,z_order]
+R$R <- cov2cor(R$R)
+#}
 
 
 
 
-if(mode == "z-score"){
-  t <- system.time(f <- gfa_fit(Z_hat = Z_hat, R = R$R, params = params, no_wrapup = TRUE))
-  N <- apply(SS, 2, median)
-  f$sample_size <- N
-  #f$F_hat_scaled <- t(t(f$F_hat)/sqrt(N))
-}else{
-  N <- apply(SS, 2, median)
-  B_std <- t( t(Z_hat)/sqrt(N))
-  t <- system.time(f <- gfa_fit(B_std = B_std, N = N, R = R$R, params = params))
-}
+N <- apply(SS, 2, median)
+t <- system.time(f <- gfa_fit(Z_hat = Z_hat,
+                                N = N,
+                                R = R$R,
+                                params = params,
+                                mode = mode,
+                                method = method))
+
 
 f$snps <- snps
 f$names <- R$names
