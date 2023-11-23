@@ -69,16 +69,17 @@ if(str_ends(R_est_file, "none_R.txt")){
   z_order <- match(R$names, nms)
   SS <- SS[,z_order]
   Z_hat <- Z_hat[,z_order]
-  R$R <- cov2cor(R)
+  R$R <- cov2cor(R$R)
 }
 
 
 
 
 if(mode == "z-score"){
-  t <- system.time(f <- gfa_fit(Z_hat = Z_hat, R = R$R, params = params))
+  t <- system.time(f <- gfa_fit(Z_hat = Z_hat, R = R$R, params = params, no_wrapup = TRUE))
   N <- apply(SS, 2, median)
-  f$F_hat_scaled <- t(t(f$F_hat)/sqrt(N))
+  f$sample_size <- N
+  #f$F_hat_scaled <- t(t(f$F_hat)/sqrt(N))
 }else{
   N <- apply(SS, 2, median)
   B_std <- t( t(Z_hat)/sqrt(N))

@@ -56,7 +56,7 @@ if "none" in config["analysis"]["R"]["type"]:
     R_strings.append("none")
 
 
-inp = expand(out_dir + prefix + "gfa_{gfas}.ldpruned_{lds}.R_{rs}.scaled.RDS",
+inp = expand(out_dir + prefix + "gfa_{gfas}.ldpruned_{lds}.R_{rs}.final.RDS",
                 gfas = gfa_strings,
                 lds = ld_strings,
                 rs = R_strings)
@@ -72,7 +72,8 @@ rule snp_table_chrom:
     input: files = ss['raw_data_path'], gwas_info = config["input"]["sum_stats"]
     output: out =  data_dir + prefix + "zmat.{chrom}.RDS"
     params: nmiss_thresh = config["analysis"]["nmiss_thresh"],
-            af_thresh = config["analysis"]["af_thresh"]
+            af_thresh = config["analysis"]["af_thresh"],
+            sample_size_tol = config["analysis"]["sample_size_tol"]
     wildcard_constraints: chrom = "\d+"
     script: 'R/1_combine_and_format.R'
 
@@ -103,7 +104,7 @@ rule ld_prune_plink:
 
 rule score_summ:
     input: zmat =  data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
-    output: summ =  data_dir + prefix + "zmat_summary.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.{chrom}.RDS",
+    output: summ = temp(data_dir + prefix + "zmat_summary.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.{chrom}.RDS"),
     wildcard_constraints: chrom = "\d+"
     script: "R/4_compute_summary.R"
 
@@ -118,7 +119,7 @@ l2_dir = config["analysis"]["R"]["l2_dir"]
 rule score_summ_ldsc:
     input: zmat =  data_dir + prefix + "zmat.{chrom}.RDS",
            l2 = l2_dir + "{chrom}.l2.ldscore.gz"
-    output: summ =  data_dir + prefix + "zmat_ldsc_summary.{chrom}.RDS",
+    output: summ =  temp(data_dir + prefix + "zmat_ldsc_summary.{chrom}.RDS"),
     wildcard_constraints: chrom = "\d+"
     script: "R/4_compute_ldsc_summary.R"
 
@@ -136,11 +137,10 @@ rule none_R:
 ### Full LDSC compute by pair
 # M doesn't matter so this could be modified to leave it out.
 rule ldsc_rg_pair:
-    input: f1 = formatted_gwas_dir + "{name1}.vcf.bgz",
-           f2 = formatted_gwas_dir + "{name2}.vcf.bgz",
+    input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23))
-    output: out =  data_dir + prefix + "ldsc.{name1}.{name2}.RDS"
+    output: out =  data_dir + prefix + "ldsc.{name1}__{name2}.RDS"
     params: gwas_info = config["input"]["sum_stats"],
             l2_dir = l2_dir
     script: 'R/4_ldsc_pair.R'
@@ -149,11 +149,11 @@ rule ldsc_rg_pair:
 name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumerate(ss['name']) if i1 <= i2]
 
 rule R_ldsc_full:
-    input: data = expand(data_dir + prefix + "ldsc.{np[0]}.{np[1]}.RDS", np = name_pairs),
+    input: data = expand(data_dir + prefix + "ldsc.{np[0]}__{np[1]}.RDS", np = name_pairs),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
     output: out = data_dir + prefix + "R_estimate.R_ldsc_full.RDS"
     params: gwas_info = config["input"]["sum_stats"], root = data_dir + prefix
-    script: 'R/4_create_R_ldsc_full.R'
+    script: 'R/4_R_ldsc_full.R'
 
 # Run GFA
 #

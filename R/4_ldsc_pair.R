@@ -1,17 +1,17 @@
 library(dplyr)
 library(purrr)
-
-library(VariantAnnotation)
-library(gwasvcf)
 library(readr)
 library(sumstatFactors)
 library(stringr)
 
 
-f1 <- snakemake@input[["f1"]]
-f2 <- snakemake@input[["f2"]]
+#f1 <- snakemake@input[["f1"]]
+#f2 <- snakemake@input[["f2"]]
+t1 <- snakemake@wildcards[["name1"]]
+t2 <- snakemake@wildcards[["name2"]]
 l2_dir <- snakemake@params[["l2_dir"]]
 gwas_info <- read_csv(snakemake@params[["gwas_info"]])
+z_files = unlist(snakemake@input[["Z"]])
 out <- snakemake@output[["out"]]
 
 ld <- purrr::map_dfr(1:22, function(c){
@@ -23,33 +23,25 @@ M <- purrr:::map(1:22, function(c){
 }) %>% unlist() %>% as.numeric() %>% sum()
 
 #bpath <- system("which bcftools", intern  = TRUE)
-bpath <- "/sw/spack/bio/pkgs/gcc-10.3.0/bcftools/1.12-g4b275ez/bin/bcftools"
-set_bcftools(bpath)
+#bpath <- "/sw/spack/bio/pkgs/gcc-10.3.0/bcftools/1.12-g4b275ez/bin/bcftools"
+#set_bcftools(bpath)
 
-d1 <- query_gwas(vcf = f1, chrompos = paste0(ld$CHR, ":", ld$BP)) %>% vcf_to_tibble()
+#d1 <- query_gwas(vcf = f1, chrompos = paste0(ld$CHR, ":", ld$BP)) %>% vcf_to_tibble()
 
-
-if(str_ends(f1, "vcf.gz") | str_ends(f1, "vcf.bgz")){
-    d1 <- purrr::map_dfr(1:22, function(c){
-                    dat <- format_ieu_chrom(f, c, 0)
-}else{
-
-}
+X <- map_dfr(z_files, readRDS)
 
 
-ss1 <- median(d1$SS)
-if(is.na(ss1)){
-    i <- which(str_detect(f1, gwas_info$name))
+if(t1 == t2){
+  cols <- c("snp", paste0(t1, ".z"), paste0(t1, ".ss"))
+  X <- select(X, all_of(cols))
+  names(X) <- c("SNP", "z1", "ss1")
+  ss1 <- median(X$ss1)
+  if(is.na(ss1)){
+    i <- which(str_detect(t1, gwas_info$name))
     ss1 <- gwas_info$pub_sample_size[i]
-}
-dat1 <- d1 %>%
-        mutate(z1 = ES/SE) %>%
-        dplyr::select(rsid, z1)
+  }
 
-
-if(f1 == f2){
-  full_dat <- dat1 %>%
-    dplyr::rename(SNP = rsid) %>%
+  full_dat <- X %>%
     inner_join(., ld)
 
   h2 <- snp_ldsc(ld_score = full_dat$L2,
@@ -60,20 +52,21 @@ if(f1 == f2){
 
   saveRDS(h2, file= out)
 }else{
-  d2 <- query_gwas(vcf = f2, chrompos = paste0(ld$CHR, ":", ld$BP)) %>% vcf_to_tibble()
-  ss2 <- median(d2$SS)
-  dat2 <- d2 %>%
-        mutate(z2 = ES/SE) %>%
-        dplyr::select(rsid, z2)
-
-   if(is.na(ss2)){
-        i <- which(str_detect(f2, gwas_info$name))
+  cols <- c("snp", paste0(c(t1, t2), ".z"), paste0(c(t1, t2), ".ss"))
+  X <- select(X, all_of(cols))
+  names(X) <- c("SNP", "z1", "z2", "ss1", "ss2")
+  ss1 <- median(X$ss1)
+  ss2 <- median(X$ss2)
+  if(is.na(ss1)){
+    i <- which(str_detect(t1, gwas_info$name))
+    ss1 <- gwas_info$pub_sample_size[i]
+  }
+  if(is.na(ss2)){
+        i <- which(str_detect(t2, gwas_info$name))
         ss2 <- gwas_info$pub_sample_size[i]
-   }
+  }
 
-  full_dat <- inner_join(dat1, dat2) %>%
-            dplyr::rename(SNP = rsid) %>%
-            inner_join(., ld)
+  full_dat <- inner_join(X, ld)
 
   rg <- ldsc_rg(ld_score = full_dat$L2,
                   ld_size = M,
