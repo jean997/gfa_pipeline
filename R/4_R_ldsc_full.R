@@ -11,8 +11,8 @@ root <- snakemake@params[["root"]]
 names <- read_csv(gwas_info)$name
 
 df <- expand.grid(n1 = names, n2 = names) %>%
-      mutate(file1 = paste0(root, "ldsc.", n1, ".", n2, ".RDS"),
-             file2 = paste0(root, "ldsc.", n2, ".", n1, ".RDS"))
+      mutate(file1 = paste0(root, "ldsc.", n1, "__", n2, ".RDS"),
+             file2 = paste0(root, "ldsc.", n2, "__", n1, ".RDS"))
 
 df$exists1 <- file.exists(df$file1)
 df$exists2 <- file.exists(df$file2)
