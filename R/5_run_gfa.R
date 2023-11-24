@@ -64,7 +64,7 @@ stopifnot(all(R$names %in% nms))
 z_order <- match(R$names, nms)
 SS <- SS[,z_order]
 Z_hat <- Z_hat[,z_order]
-R$R <- cov2cor(R$R)
+#R$R <- cov2cor(R$R)
 #}
 
 

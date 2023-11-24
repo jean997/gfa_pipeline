@@ -37,7 +37,7 @@ if(thresh == 1){
   system(paste0("cp ", snakemake@input[["R"]], " ", out))
 }else{
   R <- readRDS(snakemake@input[["R"]])
-  grps <- corclust(R$R, thresh)
+  grps <- corclust(cov2cor(R$R), thresh)
   keep <- sapply(grps, function(x){x[1]})
   newR <- list(R = R$R[keep,keep],
             names = R$names[keep])

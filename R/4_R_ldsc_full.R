@@ -30,11 +30,11 @@ cov_mat <- df %>%
 
 nms <- paste0(as.vector(cov_mat$n1), ".z")
 R <- as.matrix(cov_mat[,-1])
-R <- cov2cor(R)
+#R <- cov2cor(R)
 
 vals <- eigen(R, only.values = TRUE)
 if(any(vals) < 0){
-  R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3)$mat |> as.matrix()
+  R <- Matrix::nearPD(R, corr = FALSE, posd.tol = 1e-3)$mat |> as.matrix()
 }
 
 #eS <- eigen(R)
