@@ -1,7 +1,7 @@
 # sum_stats is a csv file
 input:
-    sum_stats: "metabo.csv"
-    label: "metabo"
+    sum_stats: "astle_bloodcell.csv"
+    label: "bc"
 
 analysis:
     # LD pruning options:
@@ -11,7 +11,7 @@ analysis:
     # ld_prioritization: either pvalue or rank
     ldprune:
         r2_thresh: 0.01
-        clump_kb: [10000, 100]
+        clump_kb: [1000]
         ld_prioritization: ["pvalue"] # "pvalue" or "rank"
         ref_path: "/nfs/turbo/sph-jvmorr/ld_reference_files/1kg_plink/EUR"
     # GFA options:
@@ -26,10 +26,11 @@ analysis:
     gfa_params: "default"
     mode: "z-score"
     method: ["fixed_factors", "random_effect"]
-    #nmiss_thresh: 0
     max_snps: Inf
     maxrep: 5
     gfa_seed: 1
+    af_thresh: 0.01
+    sample_size_tol: 0.1
     R:
         type: ["ldsc", "none", "pt"] #, "ldsc_quick"]
         pthresh: [0.05]
