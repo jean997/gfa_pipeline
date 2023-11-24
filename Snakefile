@@ -43,7 +43,8 @@ ld_strings = expand("r2{r2}_kb{kb}_{p}",
 
 if "pt" in config["analysis"]["R"]["type"]:
     R_type = expand("pt{pt}_cc{cc}", 
-                       pt = config["analysis"]["R"]["pthresh"])
+                    pt = config["analysis"]["R"]["pthresh"], 
+                    cc = config["analysis"]["R"]["cor_clust"])
 else:
     R_type = []
 
@@ -110,6 +111,8 @@ rule score_summ:
 rule summ_to_cor:
     input: expand(data_dir + prefix + "zmat_summary.ldpruned_r2{{r2_thresh}}_kb{{kb}}_{{p}}.R_pt{{pt}}.{chrom}.RDS", chrom = range(1, 23))
     output: out = data_dir + prefix + "R_estimate.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.RDS"
+    wildcard_constraints:
+           pt = "[\d.]+"
     script: "R/4_summary_to_cor.R"
 
 ###ldsc without updated weights "ldsc_quick"
@@ -130,7 +133,7 @@ rule summ_to_ldsc_cov:
 ### None
 rule none_R:
     input: gwas_info = config["input"]["sum_stats"]
-    output: out = data_dir + "none_R.txt"
+    output: out = data_dir + prefix + "R_estimate.R_none.RDS"
     shell: 'R/4_R_none.R'
 
 
@@ -156,8 +159,10 @@ rule R_ldsc_full:
     script: 'R/4_R_ldsc_full.R'
 
 rule cor_clust:
-    input: R = "{rfile}.RDS"
-    output: out = "{rfile}_cc{cc}.RDS"
+    input: R = data_dir + prefix + "R_estimate.{rstring}.RDS"
+    output: out = data_dir + prefix + "R_estimate.{rstring}_cc{cc}.RDS"
+    wildcard_constraints:
+           cc = "\d+(\.\d+)?"
     script: 'R/4_R_corclust.R'
 # Run GFA
 #
@@ -165,14 +170,10 @@ rule cor_clust:
 def R_input(wcs):
     global data_dir
     global prefix
-    if wcs.Rtype == "ldsc":
-        return f'{data_dir}{prefix}R_estimate.R_ldsc.RDS'
-    elif wcs.Rtype == "none":
-        return f'{data_dir}none_R.txt'
-    elif wcs.Rtype == "ldsc_quick":
-        return f'{data_dir}{prefix}R_estimate.R_ldsc_quick.RDS'
-    else:
+    if wcs.Rtype.startswith("pt"):
         return f'{data_dir}{prefix}R_estimate.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.RDS'
+    else:
+        return f'{data_dir}{prefix}R_estimate.R_{wcs.Rtype}.RDS'
 
 
 rule run_gfa:
