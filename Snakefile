@@ -17,7 +17,7 @@ import random
 import string
 from snakemake.utils import validate
 
-localrules: all, summ_to_cor, check_success, fail, status, final_file, scale_pve
+localrules: all, summ_to_cor, check_success, fail, status, final_file, cor_clust
 ###### Load configuration file
 configfile: "config.yaml"
 #validate(config, schema="schemas/config.schema.yaml")
@@ -42,9 +42,8 @@ ld_strings = expand("r2{r2}_kb{kb}_{p}",
                     p = config["analysis"]["ldprune"]["ld_prioritization"])
 
 if "pt" in config["analysis"]["R"]["type"]:
-    R_type = expand("pt{pt}_cc{cc}", 
-                    pt = config["analysis"]["R"]["pthresh"], 
-                    cc = config["analysis"]["R"]["cor_clust"])
+    R_type = expand("pt{pt}", 
+                    pt = config["analysis"]["R"]["pthresh"]) 
 else:
     R_type = []
 
@@ -134,7 +133,7 @@ rule summ_to_ldsc_cov:
 rule none_R:
     input: gwas_info = config["input"]["sum_stats"]
     output: out = data_dir + prefix + "R_estimate.R_none.RDS"
-    shell: 'R/4_R_none.R'
+    script: 'R/4_R_none.R'
 
 
 ### Full LDSC compute by pair
@@ -163,7 +162,7 @@ rule cor_clust:
     output: out = data_dir + prefix + "R_estimate.{rstring}_cc{cc}.RDS"
     wildcard_constraints:
            cc = "\d+(\.\d+)?"
-    script: 'R/4_R_corclust.R'
+    script: 'R/4_R_corr_clust.R'
 # Run GFA
 #
 
@@ -182,6 +181,7 @@ rule run_gfa:
     output:  out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{method}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.1.RDS",
     params: params_file = config["analysis"]["gfa_params"],
             max_snps = config["analysis"]["max_snps"]
+    wildcard_constraints: fs = "\d+"
     script: 'R/5_run_gfa.R'
 
 # This step refits if convergence was not reached
