@@ -29,18 +29,18 @@ cov_mat <- bind_rows(df, df_copy)  %>%
            select(n1, n2, cov) %>%
            reshape2::dcast(n1 ~ n2)
 
-nms <- cov_mat$n1
+nms <- cov_mat$n1 %>% stringr::str_replace(".z$", "")
 R <- as.matrix(cov_mat[,-1])
 ## no cov2cor needed, should already be correlation matrix
 
-vals <- eigen(R, only.values = TRUE)
-if(any(vals) < 0){
+vals <- eigen(R, only.values = TRUE)$values
+if(any(vals < 0)){
   R <- Matrix::nearPD(R, corr = TRUE, posd.tol = 1e-3)$mat |> as.matrix()
 }
 
 #eS <- eigen(R)
 
-ret <- list(R = R, names = nms,) # eS = eS)
+ret <- list(R = R, names = nms) # eS = eS)
 
 saveRDS(ret, file=out)
 

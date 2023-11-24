@@ -31,7 +31,7 @@ corclust <- function(R, thresh){
 
 
 thresh <- as.numeric(snakemake@wildcards[["cc"]])
-out <- snakemake@out[["out"]]
+out <- snakemake@output[["out"]]
 
 if(thresh == 1){
   system(paste0("cp ", snakemake@input[["R"]], " ", out))

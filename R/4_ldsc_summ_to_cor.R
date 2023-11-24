@@ -30,12 +30,12 @@ cov_mat <- bind_rows(df, df_copy)  %>%
            select(n1, n2, b0) %>%
            reshape2::dcast(n1 ~ n2)
 
-nms <- cov_mat$n1
+nms <- cov_mat$n1 %>% stringr::str_replace(".z$", "")
 R <- as.matrix(cov_mat[,-1])
 #R <- cov2cor(R)
 
-vals <- eigen(R, only.values = TRUE)
-if(any(vals) < 0){
+vals <- eigen(R, only.values = TRUE)$values
+if(any(vals < 0)){
   R <- Matrix::nearPD(R, corr = FALSE, posd.tol = 1e-3)$mat |> as.matrix()
 }
 

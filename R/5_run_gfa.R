@@ -54,7 +54,7 @@ SS <- X %>%
 
 snps <- X$snp
 
-nms <- names(X)[grep(".z$", names(X))]
+nms <- names(X)[grep(".z$", names(X))] %>% str_replace(".z$", "")
 
 # if(str_ends(R_est_file, "none_R.txt")){
 #   R <- list(names = nms, R = diag(length(nms), nrow = ntrait))
@@ -67,7 +67,7 @@ Z_hat <- Z_hat[,z_order]
 #R$R <- cov2cor(R$R)
 #}
 
-
+rownames(R$R) <- colnames(R$R) <- NULL
 
 
 N <- apply(SS, 2, median)

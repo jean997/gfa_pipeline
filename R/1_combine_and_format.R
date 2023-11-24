@@ -38,6 +38,9 @@ fulldat <- map(seq(nrow(info)),   function(i){
                                                      info$af[i],
                                                      info$sample_size[i],
                                                      as.logical(info$effect_is_or[i]))
+                            if(all(is.na(dat$sample_size))){
+                              dat$sample_size <- info$pub_sample_size[i]
+                            }
                         }
 
                         if(is.finite(sample_size_tol)){
