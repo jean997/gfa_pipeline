@@ -1,6 +1,7 @@
 
 
 gwas_info <- snakemake@input[["gwas_info"]]
-names <- read_csv(gwas_info)$name
+names <- readr::read_csv(gwas_info)$name
 n <- length(names)
-R <- list(R = diag(n, nrow = n), names = names)
+ret <- list(R = diag(n, nrow = n), names = names)
+saveRDS(ret, file = snakemake@output[["out"]])
