@@ -8,19 +8,22 @@ require(sumstatFactors)
 format_ieu_chrom <- function(file, chrom, af_thresh){
     stopifnot(af_thresh < 0.5)
 
-    dat <- query_chrompos_file(paste0(chrom, ":1-536870911"), file) %>%
-           vcf_to_tibble() %>%
-           filter(AF > af_thresh & AF < (1-af_thresh)) %>%
-           mutate(p_value = 10^{-1*LP})
+  dat <- query_chrompos_file(paste0(chrom, ":1-536870911"), file) %>%
+    vcf_to_tibble() %>%
+    mutate(p_value = 10^{-1*LP})
+  if(!all(is.na(dat$AF))){
+    dat <- dat %>%
+      filter(AF > af_thresh & AF < (1-af_thresh))
+  }
 
-    dat <- gwas_format(dat, "ID", "ES", "SE", "ALT",
+  dat <- gwas_format(dat, "ID", "ES", "SE", "ALT",
                        "REF", "seqnames", "start",
                        p_value = "p_value",
                        sample_size = "SS",
                        compute_pval = TRUE)
 
 
-    return(dat)
+  return(dat)
 }
 
 
@@ -35,7 +38,7 @@ format_flat_chrom <- function(file, chrom, af_thresh,
                               af_name,
                               sample_size_name,
                               effect_is_or
-                              ){ 
+                              ){
 
     if(!p_value_name %in% c("", "NA", NA)){
         pstring <- paste0(", `", p_value_name, "`='d'")
@@ -61,7 +64,7 @@ format_flat_chrom <- function(file, chrom, af_thresh,
         afstring <- ""
         af_name <- NA
     }
-  
+
 
     col_string <- paste0("cols_only(`", snp_name, "`='c', `",
                      A1_name , "`='c', `", A2_name, "`='c', `",
@@ -74,7 +77,7 @@ format_flat_chrom <- function(file, chrom, af_thresh,
         h <- read_table(pipe(paste0("gzip -cd ", file, " | head -2")))
         n <- which(names(h) == chrom_name)
         awk_cmd <- paste0("gzip -cd ", file, " | awk '{if ($", n, " == \"", chrom, "\") print $0}' - ")
-    }else{    
+    }else{
         h <- read_table(pipe(paste0("head -2 ", file)))
         n <- which(names(h) == chrom_name)
         awk_cmd <- paste0("awk '{if ($", n, " == \"", chrom, "\") print $0}' ", file)
@@ -84,7 +87,7 @@ format_flat_chrom <- function(file, chrom, af_thresh,
     if(!is.na(af_name)){
         ix <- which(X[[af_name]] > af_thresh & X[[af_name]] < (1-af_thresh))
         X <- X[ix,]
-    }  
+    }
 
     if(effect_is_or){
         X$beta <- log(X[[beta_hat_name]])
