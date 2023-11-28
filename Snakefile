@@ -142,7 +142,10 @@ rule ldsc_rg_pair:
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)), 
            gwas_info = config["input"]["sum_stats"]
-    output: out =  data_dir + prefix + "ldsc.{name1}__{name2}.RDS"
+    output: out =  data_dir + prefix + "ldsc.{name1}___{name2}.RDS"
+    wildcard_constraints:
+      name1 = "(" + "|".join(ss['name']) + ")",
+      name2 = "(" + "|".join(ss['name']) + ")"
     params: l2_dir = l2_dir
     script: 'R/4_ldsc_pair.R'
 
@@ -150,7 +153,7 @@ rule ldsc_rg_pair:
 name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumerate(ss['name']) if i1 <= i2]
 
 rule R_ldsc_full:
-    input: data = expand(data_dir + prefix + "ldsc.{np[0]}__{np[1]}.RDS", np = name_pairs),
+    input: data = expand(data_dir + prefix + "ldsc.{np[0]}___{np[1]}.RDS", np = name_pairs),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)), 
            gwas_info = config["input"]["sum_stats"]
     output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
