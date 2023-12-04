@@ -42,8 +42,8 @@ ld_strings = expand("r2{r2}_kb{kb}_{p}",
                     p = config["analysis"]["ldprune"]["ld_prioritization"])
 
 if "pt" in config["analysis"]["R"]["type"]:
-    R_type = expand("pt{pt}", 
-                    pt = config["analysis"]["R"]["pthresh"]) 
+    R_type = expand("pt{pt}",
+                    pt = config["analysis"]["R"]["pthresh"])
 else:
     R_type = []
 
@@ -72,7 +72,7 @@ rule all:
 # and columns <study>.z, <study>.ss for z-score and sample size of each snp
 rule snp_table_chrom:
     input: files = ss['raw_data_path'], gwas_info = config["input"]["sum_stats"]
-    output: out =  data_dir + prefix + "zmat.{chrom}.RDS"
+    output: out =  temp(data_dir + prefix + "zmat.{chrom}.RDS")
     #params: #nmiss_thresh = config["analysis"]["nmiss_thresh"],
     params: af_thresh = config["analysis"]["af_thresh"],
             sample_size_tol = config["analysis"]["sample_size_tol"]
@@ -86,7 +86,7 @@ rule snp_table_chrom:
 rule ld_prune_plink:
     input: zmat = data_dir + prefix + "zmat.{chrom}.RDS",
            bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed"
-    output: out = data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
+    output: out = temp(data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS")
     params: ref_path = config["analysis"]["ldprune"]["ref_path"],
             pthresh = 1
     wildcard_constraints: chrom = "\d+"
@@ -95,7 +95,7 @@ rule ld_prune_plink:
 
 ## Estimate R
 
-# For p-value threshold and ldsc_quick methods, we can compute R 
+# For p-value threshold and ldsc_quick methods, we can compute R
 # without ever reading in all of the data.
 # For ldsc method, we need to run ldsc for each pair of traits first.
 
@@ -140,7 +140,7 @@ rule none_R:
 rule ldsc_rg_pair:
     input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
-           m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)), 
+           m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
            gwas_info = config["input"]["sum_stats"]
     output: out =  data_dir + prefix + "ldsc.{name1}___{name2}.RDS"
     wildcard_constraints:
@@ -154,7 +154,7 @@ name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumera
 
 rule R_ldsc_full:
     input: data = expand(data_dir + prefix + "ldsc.{np[0]}___{np[1]}.RDS", np = name_pairs),
-           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)), 
+           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
            gwas_info = config["input"]["sum_stats"]
     output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
     params: root = data_dir + prefix
