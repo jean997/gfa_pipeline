@@ -26,7 +26,8 @@ Rpt <- R_pt(B_hat = Z_hat,
             S_hat = matrix(1, nrow = nrow(Z_hat), ncol = ncol(Z_hat)),
             p_val_thresh = p_thresh,
             return_cor = TRUE,
-            make_well_conditioned = TRUE)
+            make_well_conditioned = FALSE
+            )
 
 ret <- list(R = Rpt, names = nms)
 saveRDS(ret, file=out)

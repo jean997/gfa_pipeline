@@ -25,7 +25,6 @@ X <- map_dfr(z_files, function(f){
     rename(SNP = snp) %>%
     inner_join(., ld)})
 
-
 names <- gwas_info$name
 
 Z_hat <- X %>%
@@ -50,7 +49,8 @@ R <- R_ldsc(Z_hat = Z_hat,
               N = N,
               return_gencov = TRUE,
               return_cor = FALSE,
-              make_well_conditioned = TRUE)
+              make_well_conditioned = FALSE # this is done in cor_clust
+              )
 
 ret <- list(R = R$Re, Rg = R$Rg, names = nms)
 saveRDS(ret, file=out)

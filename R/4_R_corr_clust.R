@@ -32,15 +32,18 @@ corclust <- function(R, thresh){
 
 thresh <- as.numeric(snakemake@wildcards[["cc"]])
 out <- snakemake@output[["out"]]
+cond_num <- snakemake@params[["cond_num"]]
 
-if(thresh == 1){
-  system(paste0("cp ", snakemake@input[["R"]], " ", out))
-}else{
   R <- readRDS(snakemake@input[["R"]])
   grps <- corclust(cov2cor(R$R), thresh)
   keep <- sapply(grps, function(x){x[1]})
+  grps <- lapply(grps, function(g){R$names[g]})
   newR <- list(R = R$R[keep,keep],
             names = R$names[keep])
-  saveRDS(newR, file = out )
-}
+  if(!is.null(R$Rg)){newR$Rg <- R$Rg[keep,keep]}
+  v <- eigen(newR$R, only.values = TRUE)$values
+  if(max(v)/min(v) > cond_num){
+      newR$R <- sumstatFactors::condition(newR$R, cond_num)
+  }
+  saveRDS(newR, file = out , groups = grps)
 
