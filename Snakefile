@@ -17,7 +17,7 @@ import random
 import string
 from snakemake.utils import validate
 
-localrules: all, summ_to_cor, check_success, fail, status, final_file, cor_clust
+localrules: all, check_success, fail, status, final_file, cor_clust
 ###### Load configuration file
 configfile: "config.yaml"
 #validate(config, schema="schemas/config.schema.yaml")
@@ -101,18 +101,24 @@ rule ld_prune_plink:
 
 ####p-value threshold method
 
-rule score_summ:
-    input: zmat =  data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
-    output: summ = temp(data_dir + prefix + "zmat_summary.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.{chrom}.RDS"),
-    wildcard_constraints: chrom = "\d+"
-    script: "R/4_compute_summary.R"
+# rule score_summ:
+#     input: zmat =  data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
+#     output: summ = temp(data_dir + prefix + "zmat_summary.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.{chrom}.RDS"),
+#     wildcard_constraints: chrom = "\d+"
+#     script: "R/4_compute_summary.R"
+# 
+# rule summ_to_cor:
+#     input: expand(data_dir + prefix + "zmat_summary.ldpruned_r2{{r2_thresh}}_kb{{kb}}_{{p}}.R_pt{{pt}}.{chrom}.RDS", chrom = range(1, 23))
+#     output: out = data_dir + prefix + "R_estimate.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.RDS"
+#     wildcard_constraints:
+#            pt = "[\d.]+"
+#     script: "R/4_summary_to_cor.R"
 
-rule summ_to_cor:
-    input: expand(data_dir + prefix + "zmat_summary.ldpruned_r2{{r2_thresh}}_kb{{kb}}_{{p}}.R_pt{{pt}}.{chrom}.RDS", chrom = range(1, 23))
-    output: out = data_dir + prefix + "R_estimate.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.RDS"
-    wildcard_constraints:
-           pt = "[\d.]+"
-    script: "R/4_summary_to_cor.R"
+rule R_pt:
+  input: Z = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23))
+  output: out = data_dir + prefix + "R_estimate.ldpruned_r2{r2}_kb{kb}_{p}.R_pt{pt}.RDS"
+  wildcard_constraints: pt = "[\d.]+"
+  script: "R/4_R_pthresh.R"
 
 ###ldsc without updated weights "ldsc_quick"
 
@@ -137,28 +143,36 @@ rule none_R:
 
 
 ### Full LDSC compute by pair
-rule ldsc_rg_pair:
-    input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)),
-           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
-           m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
-           gwas_info = config["input"]["sum_stats"]
-    output: out =  data_dir + prefix + "ldsc.{name1}___{name2}.RDS"
-    wildcard_constraints:
-      name1 = "(" + "|".join(ss['name']) + ")",
-      name2 = "(" + "|".join(ss['name']) + ")"
-    params: l2_dir = l2_dir
-    script: 'R/4_ldsc_pair.R'
-
-
-name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumerate(ss['name']) if i1 <= i2]
-
+# rule ldsc_rg_pair:
+#     input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)),
+#            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
+#            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
+#            gwas_info = config["input"]["sum_stats"]
+#     output: out =  data_dir + prefix + "ldsc.{name1}___{name2}.RDS"
+#     wildcard_constraints:
+#       name1 = "(" + "|".join(ss['name']) + ")",
+#       name2 = "(" + "|".join(ss['name']) + ")"
+#     params: l2_dir = l2_dir
+#     script: 'R/4_ldsc_pair.R'
+# 
+# 
+# name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumerate(ss['name']) if i1 <= i2]
+# 
+# rule R_ldsc_full:
+#     input: data = expand(data_dir + prefix + "ldsc.{np[0]}___{np[1]}.RDS", np = name_pairs),
+#            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
+#            gwas_info = config["input"]["sum_stats"]
+#     output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
+#     params: root = data_dir + prefix
+#     script: 'R/4_R_ldsc_full.R'
 rule R_ldsc_full:
-    input: data = expand(data_dir + prefix + "ldsc.{np[0]}___{np[1]}.RDS", np = name_pairs),
-           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
-           gwas_info = config["input"]["sum_stats"]
+    input: Z = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23)), 
+           gwas_info = config["input"]["sum_stats"],
+           m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
+           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
     output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
-    params: root = data_dir + prefix
-    script: 'R/4_R_ldsc_full.R'
+    wildcard_constraints: pt = "[\d.]+"
+    script: "R/4_R_ldsc_all.R"  
 
 rule cor_clust:
     input: R = data_dir + prefix + "R_estimate.{rstring}.RDS"
