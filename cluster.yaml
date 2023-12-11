@@ -5,9 +5,6 @@ __default__:
     log: "log/snake-{rule}-{wildcards}"
     time: "2:00:00"
 
-format:
-    mem: "30G"
-
 snp_table_chrom:
     mem: "20G"
 
@@ -16,13 +13,18 @@ ld_prune_plink:
     time:  "1:00:00"
 
 run_gfa:
-    mem: "20G"
+    mem: "5G"
     time: "1-00:00:00"
 
 refit_gfa:
+    mem: "5G"
+    time: "1-00:00:00"
+
+ldsc_rg_pair:
     mem: "20G"
     time: "1-00:00:00"
 
-estimate_L:
+R_ldsc_full:
     mem: "20G"
     time: "1-00:00:00"
+

@@ -166,7 +166,7 @@ rule none_R:
 #     params: root = data_dir + prefix
 #     script: 'R/4_R_ldsc_full.R'
 rule R_ldsc_full:
-    input: Z = expand(data_dir + prefix + "zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23)), 
+    input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)), 
            gwas_info = config["input"]["sum_stats"],
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))

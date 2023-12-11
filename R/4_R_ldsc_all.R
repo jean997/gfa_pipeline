@@ -20,9 +20,11 @@ M <- purrr:::map(1:22, function(c){
   read_lines(m_files[c])
 }) %>% unlist() %>% as.numeric() %>% sum()
 
-X <- map_dfr(z_files, readRDS)
-X <- X %>% rename(SNP = snp) %>%
-     inner_join(., ld)
+X <- map_dfr(z_files, function(f){
+  readRDS(f) %>%
+    rename(SNP = snp) %>%
+    inner_join(., ld)})
+
 
 names <- gwas_info$name
 
