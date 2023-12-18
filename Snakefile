@@ -106,7 +106,7 @@ rule ld_prune_plink:
 #     output: summ = temp(data_dir + prefix + "zmat_summary.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.{chrom}.RDS"),
 #     wildcard_constraints: chrom = "\d+"
 #     script: "R/4_compute_summary.R"
-# 
+#
 # rule summ_to_cor:
 #     input: expand(data_dir + prefix + "zmat_summary.ldpruned_r2{{r2_thresh}}_kb{{kb}}_{{p}}.R_pt{{pt}}.{chrom}.RDS", chrom = range(1, 23))
 #     output: out = data_dir + prefix + "R_estimate.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_pt{pt}.RDS"
@@ -154,10 +154,10 @@ rule none_R:
 #       name2 = "(" + "|".join(ss['name']) + ")"
 #     params: l2_dir = l2_dir
 #     script: 'R/4_ldsc_pair.R'
-# 
-# 
+#
+#
 # name_pairs = [(n1, n2) for i1, n1 in enumerate(ss['name']) for i2, n2 in enumerate(ss['name']) if i1 <= i2]
-# 
+#
 # rule R_ldsc_full:
 #     input: data = expand(data_dir + prefix + "ldsc.{np[0]}___{np[1]}.RDS", np = name_pairs),
 #            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23)),
@@ -167,18 +167,18 @@ rule none_R:
 #     script: 'R/4_R_ldsc_full.R'
 
 rule R_ldsc_full:
-    input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)), 
+    input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)),
            gwas_info = config["input"]["sum_stats"],
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
     output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
     wildcard_constraints: pt = "[\d.]+"
-    script: "R/4_R_ldsc_all.R"  
+    script: "R/4_R_ldsc_all.R"
 
 rule cor_clust:
     input: R = data_dir + prefix + "R_estimate.{rstring}.RDS"
     output: out = data_dir + prefix + "R_estimate.{rstring}_cc{cc}.RDS"
-    params: cond_num = config["analysis"]["cond_num"] 
+    params: cond_num = config["analysis"]["cond_num"]
     wildcard_constraints:
            cc = "\d+(\.\d+)?"
     script: 'R/4_R_corr_clust.R'
@@ -210,7 +210,7 @@ def refit_input(wcs):
     return f'{out_dir}{prefix}gfa_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.{oldn}.RDS'
 
 rule refit_gfa:
-    input:  refit_input
+    input:  inp = refit_input
     output: out = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.RDS",
     params: params_file = config["analysis"]["gfa_params"]
     script: 'R/5_refit_gfa.R'
@@ -272,3 +272,17 @@ rule final_file:
     params: rds = final_rds
     shell: "mv {params.rds} {output.out_rds}"
 
+rule gls_loadings_chrom:
+    input: z_file = data_dir + prefix + "zmat.{chrom}.RDS",
+           gfa_file = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{method}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.final.RDS"
+           R = R_input
+    output: out = out_dir + prefix + "gls_loadings.{mode}_gfaseed{fs}_{method}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{chrom}.RDS"
+    script: "R/6_estL_gls.R"
+
+
+rule R_ldsc_gls:
+    input: Z = expand(out_dir + prefix + "gls_loadings.{{analysis}}.{chrom}.RDS, chrom = range(1, 23)),
+           m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
+           l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
+    output: out = out_dir + prefix + "gls_loadings.Rgcor.RDS"
+    script: "R/6_estL_gencor.R"

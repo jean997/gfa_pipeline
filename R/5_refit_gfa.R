@@ -1,22 +1,11 @@
 library(sumstatFactors)
 
-inp <- snakemake@input[[1]]
+inp <- snakemake@input[["inp"]]
 outp <- snakemake@output[["out"]]
-params_file <- snakemake@params[["params_file"]]
-
-
-param_default <- gfa_default_parameters()
-if(params_file == "default"){
-  params <- param_default
-}else{
-  params <- readRDS(params_file)
-  if(is.null(params$extrapolate)) params$extrapolate <- param_default$extrapolate
-  if(is.null(params$max_iter)) params$max_iter <- param_default$max_iter
-}
 
 fit0 <- readRDS(inp)
 
-new_fit <- gfa_rebackfit(fit = fit0$fit,
+new_fit <- gfa_rebackfit(gfa_fit = fit0,
                          params = fit0$params)
-
+new_fit$names <- fit0$names
 saveRDS(new_fit, outp)
