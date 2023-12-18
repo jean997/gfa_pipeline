@@ -72,7 +72,7 @@ rule all:
 # and columns <study>.z, <study>.ss for z-score and sample size of each snp
 rule snp_table_chrom:
     input: files = ss['raw_data_path'], gwas_info = config["input"]["sum_stats"]
-    output: out =  temp(data_dir + prefix + "zmat.{chrom}.RDS")
+    output: out =  data_dir + prefix + "zmat.{chrom}.RDS"
     #params: #nmiss_thresh = config["analysis"]["nmiss_thresh"],
     params: af_thresh = config["analysis"]["af_thresh"],
             sample_size_tol = config["analysis"]["sample_size_tol"]
@@ -86,7 +86,7 @@ rule snp_table_chrom:
 rule ld_prune_plink:
     input: zmat = data_dir + prefix + "zmat.{chrom}.RDS",
            bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed"
-    output: out = temp(data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS")
+    output: out = data_dir + prefix + "zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
     params: ref_path = config["analysis"]["ldprune"]["ref_path"],
             pthresh = 1
     wildcard_constraints: chrom = "\d+"
@@ -165,6 +165,7 @@ rule none_R:
 #     output: out = data_dir + prefix + "R_estimate.R_ldsc.RDS"
 #     params: root = data_dir + prefix
 #     script: 'R/4_R_ldsc_full.R'
+
 rule R_ldsc_full:
     input: Z = expand(data_dir + prefix + "zmat.{chrom}.RDS", chrom = range(1, 23)), 
            gwas_info = config["input"]["sum_stats"],
@@ -177,6 +178,7 @@ rule R_ldsc_full:
 rule cor_clust:
     input: R = data_dir + prefix + "R_estimate.{rstring}.RDS"
     output: out = data_dir + prefix + "R_estimate.{rstring}_cc{cc}.RDS"
+    params: cond_num = config["analysis"]["cond_num"] 
     wildcard_constraints:
            cc = "\d+(\.\d+)?"
     script: 'R/4_R_corr_clust.R'

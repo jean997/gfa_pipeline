@@ -24,18 +24,19 @@ analysis:
     # R: Specifies options for how correlation is estimated. Type can be either "ldsc", "pt", "none" or "ldsc_quick" for the p-threshold method.
     # LDSC is usually the best choice but pt is faster and generally gives nearly identical results
     gfa_params: "default"
+    cond_num: 1e3
     mode: "z-score"
-    method: ["fixed_factors", "random_effect"]
+    method: ["fixed_factors"]
     max_snps: Inf
     maxrep: 5
     gfa_seed: 1
     af_thresh: 0.01
     sample_size_tol: 0.1
     R:
-        type: ["ldsc", "none", "pt"] #, "ldsc_quick"]
+        type: ["pt", "ldsc"] #,"ldsc" "ldsc_quick"]
         pthresh: [0.05]
         l2_dir: "/nfs/turbo/sph-jvmorr/ld_reference_files/ldsc_reference_files/eur_w_ld_chr/"
-        cor_clust: [0.95]
+        cor_clust: [1, 0.98, 0.95]
 
 out:
     # Output data options:
