@@ -2,7 +2,7 @@ library(sumstatFactors)
 
 inp <- snakemake@input[[1]]
 outp <- snakemake@output[["out"]]
-params_file <- snakemake@params[["param_file"]]
+params_file <- snakemake@params[["params_file"]]
 
 
 param_default <- gfa_default_parameters()
