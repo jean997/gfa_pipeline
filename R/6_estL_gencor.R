@@ -35,9 +35,9 @@ R <- R_ldsc(Z_hat = Z_hat,
             N = rep(1, ncol(Z_hat)),
             return_gencov = TRUE,
             return_cor = TRUE,
-            make_well_conditioned = FALSE # this is done in cor_clust
+            make_well_conditioned = FALSE # not needed we only need Rg
 )
 
-ret <- list(Rgcor = R$Rgcor, Re = R$Re, names = nms)
+ret <- list(Rgcor = R$Rg, Re = R$Re, names = nms)
 saveRDS(ret, file=out)
 
