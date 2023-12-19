@@ -284,5 +284,5 @@ rule R_ldsc_gls:
     input: Z = expand(out_dir + prefix + "gls_loadings.{{analysis}}.{chrom}.RDS, chrom = range(1, 23)),
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
-    output: out = out_dir + prefix + "gls_loadings.Rgcor.RDS"
+    output: out = out_dir + prefix + "gls_loadings.{analysis}.Rgcor.RDS"
     script: "R/6_estL_gencor.R"

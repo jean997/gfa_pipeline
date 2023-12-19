@@ -44,7 +44,7 @@ cond_num <- as.numeric(snakemake@params[["cond_num"]])-1
   if(max(v)/min(v) > cond_num | any(v < 0)){
       newR$R <- sumstatFactors::condition(newR$R, cond_num, corr = TRUE)
   }else{
-      newR$R <- cov2cor(R)
+      newR$R <- cov2cor(newR$R)
   }
   newR$groups <- lapply(grps, function(g){R$names[g]})
   saveRDS(newR, file = out)
