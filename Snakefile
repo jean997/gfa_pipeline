@@ -25,6 +25,8 @@ configfile: "config.yaml"
 # output options
 data_dir = config["out"]["data_dir"] #where the data is
 out_dir = config["out"]["output_dir"] #where results will go
+l2_dir = config["analysis"]["R"]["l2_dir"]
+
 
 prefix_dict = dict(zip(config["input"]["label"], config["input"]["sum_stats"]))
 
