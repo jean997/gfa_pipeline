@@ -216,12 +216,12 @@ def final_rds(wcs):
 checkpoint check_success:
     input: out_dir + "{prefix}_gfa_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.RDS"
     output: out_check = out_dir + "{prefix}_check_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{n}.txt"
-    params: success_file = out_dir + prefix + 'success_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt'
+    params: success_file = out_dir + '{prefix}_success_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt'
     wildcard_constraints: n = "\d+"
     script: "R/5_check_gfa.R"
 
 rule fail:
-    output: out_dir + prefix + 'fail_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt'
+    output: out_dir + '{prefix}_fail_{mode}_gfaseed{fs}_{pv}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.txt'
     wildcard_constraints:  n = "\d+"
     params: max_tries = max_gfa_tries
     shell: "echo  Model not converged after {params.max_tries} rounds of {maxiter} iterations. > {output} "
