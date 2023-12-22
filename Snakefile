@@ -127,14 +127,14 @@ rule R_pt:
 
 ### None
 rule none_R:
-    input: gwas_info = config["input"]["sum_stats"]
+    input: gwas_info = info_input
     output: out = data_dir + "{prefix}_R_estimate.R_none.RDS"
     script: 'R/4_R_none.R'
 
 
 rule R_ldsc_full:
     input: Z = expand(data_dir + "{{prefix}}_zmat.{chrom}.RDS", chrom = range(1, 23)),
-           gwas_info = config["input"]["sum_stats"],
+           gwas_info = info_input,
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
     output: out = data_dir + "{prefix}_R_estimate.R_ldsc.RDS"
