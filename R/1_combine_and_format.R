@@ -38,9 +38,9 @@ fulldat <- map(seq(nrow(info)),   function(i){
                                                      info$af[i],
                                                      info$sample_size[i],
                                                      as.logical(info$effect_is_or[i]))
-                            if(all(is.na(dat$sample_size))){
-                              dat$sample_size <- info$pub_sample_size[i]
-                            }
+                        }
+                        if(all(is.na(dat$sample_size))){
+                           dat$sample_size <- info$pub_sample_size[i]
                         }
 
                         if(is.finite(sample_size_tol)){
@@ -53,9 +53,9 @@ fulldat <- map(seq(nrow(info)),   function(i){
                         ss_name <- as_name(paste0(n, ".ss"))
 
                         dat$sample_size[is.na(dat$sample_size)] <- as.numeric(info$pub_sample_size)
-                        dat <-dat %>%  mutate(Z = beta_hat/se) %>%
-                               rename(REF = A2, ALT = A1) %>%
-                               select(chrom, snp, REF, ALT,
+                        dat <-dat %>%  dplyr::mutate(Z = beta_hat/se) %>%
+                               dplyr::rename(REF = A2, ALT = A1) %>%
+                               dplyr::select(chrom, snp, REF, ALT,
                                               !!pos_name := pos,
                                               !!z_name := Z,
                                               !!ss_name := sample_size)
@@ -69,14 +69,12 @@ if(length(dup_snps) > 0){
 
 
 
-# Save table of how traits are missing each SNP for LD clumping
+# Table of how traits are missing each SNP for LD clumping
 miss <- fulldat %>%
-        select(ends_with(".z")) %>%
+        dplyr::select(ends_with(".z")) %>%
         is.na(.) %>%
         rowSums(.)
-
 #nmiss <- data.frame(snp = fulldat$snp, miss = miss)
-
 #ix <- which(miss <= nmiss_thresh)
 ix <- which(miss == 0)
 
