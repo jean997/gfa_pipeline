@@ -35,8 +35,7 @@ prefix_dict = dict(zip(config["input"]["label"], config["input"]["sum_stats"]))
 #ss = pd.read_csv(config["input"]["sum_stats"], na_filter=False)
 #prefix = config["input"]["label"] + "_"
 
-gfa_strings = expand("{prefix}_{mode}_gfaseed{s}_{method}",
-                     prefix = config["input"]["label"],
+gfa_strings = expand("{mode}_gfaseed{s}_{method}",
                      mode = config["analysis"]["mode"],
                      s = config["analysis"]["gfa_seed"],
                      method = config["analysis"]["method"])
@@ -78,12 +77,14 @@ rule all:
 # This produces one data frame per chromosome with columns for snp info
 # and columns <study>.z, <study>.ss for z-score and sample size of each snp
 def raw_data_input(wcs):
-    mycsv = prefx_dict[wcs.prefix]
+    global prefix_dict
+    mycsv = prefix_dict[wcs.prefix]
     ss = pd.read_csv(mycsv, na_filter=False)
     return ss['raw_data_path']
 
 def info_input(wcs):
-  return prefx_dict[wcs.prefix]
+    global prefix_dict
+    return prefix_dict[wcs.prefix]
   
 rule snp_table_chrom:
     input: files = raw_data_input, gwas_info = info_input
@@ -152,11 +153,10 @@ rule cor_clust:
 
 def R_input(wcs):
     global data_dir
-    global prefix
     if wcs.Rtype.startswith("pt"):
-        return f'{data_dir}{prefix}R_estimate.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.RDS'
+        return f'{data_dir}{wcs.prefix}_R_estimate.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.RDS'
     else:
-        return f'{data_dir}{prefix}R_estimate.R_{wcs.Rtype}.RDS'
+        return f'{data_dir}{wcs.prefix}_R_estimate.R_{wcs.Rtype}.RDS'
 
 
 rule run_gfa:
@@ -172,7 +172,7 @@ rule run_gfa:
 def refit_input(wcs):
     n = int(wcs.n)
     oldn = str(n-1)
-    return f'{out_dir}{prefix}gfa_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.{oldn}.RDS'
+    return f'{out_dir}{wcs.prefix}_gfa_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.{oldn}.RDS'
 
 rule refit_gfa:
     input:  inp = refit_input
@@ -187,14 +187,13 @@ max_gfa_tries =  int(config["analysis"]["maxrep"])
 def next_input(wcs):
     global max_gfa_tries
     global out_dir
-    global prefix
 
-    check_prefix = f'{prefix}check_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.'
+    check_prefix = f'{wcs.prefix}_check_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.'
     check_files = [y for y in os.listdir(out_dir) if y.startswith(check_prefix) ]
     n_tries = len(check_files) + 1
 
-    success_file = f'{out_dir}{prefix}success_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.txt'
-    fail_file = f'{out_dir}{prefix}fail_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.txt'
+    success_file = f'{out_dir}{wcs.prefix}_success_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.txt'
+    fail_file = f'{out_dir}{wcs.prefix}_fail_{wcs.mode}_gfaseed{wcs.fs}_{wcs.pv}.ldpruned_r2{wcs.r2}_kb{wcs.kb}_{wcs.p}.R_{wcs.Rtype}.txt'
     #return fail_file
     if os.path.exists(success_file):
         return success_file
@@ -205,12 +204,11 @@ def next_input(wcs):
 
 def final_rds(wcs):
     global out_dir
-    global prefix
 
-    check_prefix = f'{prefix}check_{wcs.analysis}'
+    check_prefix = f'{wcs.prefix}_check_{wcs.analysis}'
     check_files = [y for y in os.listdir(out_dir) if y.startswith(check_prefix) ]
     n_tries = len(check_files)
-    final_gfa_file = f'{out_dir}{prefix}gfa_{wcs.analysis}.{n_tries}.RDS'
+    final_gfa_file = f'{out_dir}{wcs.prefix}_gfa_{wcs.analysis}.{n_tries}.RDS'
     return final_gfa_file
 
 checkpoint check_success:
