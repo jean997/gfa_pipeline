@@ -21,8 +21,8 @@ analysis:
     # max_snps: largest number of variants to allow
     # maxrep: If algorithm does not converge in maxiter iterations, the pipeline will try again this number of times. This allows restarting of non-converged fits.
     # gfa_seed: Seed for GFA. This can be a list, in which case multiple fits will be done using different seeds.
-    # R: Specifies options for how correlation is estimated. Type can be either "ldsc", "pt", "none" or "ldsc_quick" for the p-threshold method.
-    # LDSC is usually the best choice but pt is faster and generally gives nearly identical results
+    # R: Specifies options for how correlation is estimated. Type can be either "ldsc", "pt", or "none".
+    # LDSC or pt will both work. pt is faster and generally gives nearly identical results to LDSC.
     gfa_params: "default"
     cond_num: 1e3
     mode: "z-score"
