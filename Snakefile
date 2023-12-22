@@ -60,7 +60,8 @@ R_strings = expand("{rt}_cc{cc}",
                    rt = R_type,
                    cc = config["analysis"]["R"]["cor_clust"])
 
-inp = expand(out_dir + prefix + "gfa_{gfas}.ldpruned_{lds}.R_{rs}.final.RDS",
+inp = #expand(out_dir + prefix + "gfa_{gfas}.ldpruned_{lds}.R_{rs}.final.RDS",
+      expand(out_dir + prefix + "gls_loadings.{gfas}.ldpruned_{lds}.R_{rs}.Rgcor.RDS",
                 gfas = gfa_strings,
                 lds = ld_strings,
                 rs = R_strings)
@@ -274,14 +275,14 @@ rule final_file:
 
 rule gls_loadings_chrom:
     input: z_file = data_dir + prefix + "zmat.{chrom}.RDS",
-           gfa_file = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{method}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.final.RDS"
+           gfa_file = out_dir + prefix + "gfa_{mode}_gfaseed{fs}_{method}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.final.RDS",
            R = R_input
     output: out = out_dir + prefix + "gls_loadings.{mode}_gfaseed{fs}_{method}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.{chrom}.RDS"
     script: "R/6_estL_gls.R"
 
 
 rule R_ldsc_gls:
-    input: Z = expand(out_dir + prefix + "gls_loadings.{{analysis}}.{chrom}.RDS, chrom = range(1, 23)),
+    input: Z = expand(out_dir + prefix + "gls_loadings.{{analysis}}.{chrom}.RDS", chrom = range(1, 23)),
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
     output: out = out_dir + prefix + "gls_loadings.{analysis}.Rgcor.RDS"
