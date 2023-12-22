@@ -29,7 +29,7 @@ You will need to following R packages.
 To use the pipeline, create the directory you would like to do your analysis in. Clone the pipeline into that directory using 
 
 ```
-git clone git@github.com:jean997/gfa_pipeline.git
+git clone https://github.com/jean997/gfa_pipeline.git
 ```
 
 This will create a sub-directory `gfa_pipeline`. We want to move all the files up one level into the working directory. 
@@ -46,7 +46,6 @@ Your directory should contain a file called `example.csv` which is an example of
 The GWAS data itself can be in one of three formats: 
 
 - A vcf file downloaded from the IEU Open GWAS database
-- The format used by the [Neale Lab for UK Biobank results](http://www.nealelab.is/uk-biobank) 
 - A flat file (eg csv, tsv etc) with columns for snp, effect and non-effect alleles, effect estimate, and standard error
 
 

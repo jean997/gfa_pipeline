@@ -114,7 +114,7 @@ rule ld_prune_plink:
 ####p-value threshold method
 
 rule R_pt:
-  input: Z = expand(data_dir + "{prefix}_zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23))
+  input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23))
   output: out = data_dir + "{prefix}_R_estimate.ldpruned_r2{r2}_kb{kb}_{p}.R_pt{pt}.RDS"
   wildcard_constraints: pt = "[\d.]+"
   script: "R/4_R_pthresh.R"
@@ -130,7 +130,7 @@ rule none_R:
 
 
 rule R_ldsc_full:
-    input: Z = expand(data_dir + "{prefix}_zmat.{chrom}.RDS", chrom = range(1, 23)),
+    input: Z = expand(data_dir + "{{prefix}}_zmat.{chrom}.RDS", chrom = range(1, 23)),
            gwas_info = config["input"]["sum_stats"],
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
@@ -158,7 +158,7 @@ def R_input(wcs):
 
 
 rule run_gfa:
-    input: Z = expand(data_dir + "{prefix}_zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23)),
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23)),
            R = R_input
     output:  out = out_dir + "{prefix}_gfa_{mode}_gfaseed{fs}_{method}.ldpruned_r2{r2}_kb{kb}_{p}.R_{Rtype}.1.RDS",
     params: params_file = config["analysis"]["gfa_params"],
@@ -244,7 +244,7 @@ rule gls_loadings_chrom:
 
 
 rule R_ldsc_gls:
-    input: Z = expand(out_dir + "{prefix}_gls_loadings.{{analysis}}.{chrom}.RDS", chrom = range(1, 23)),
+    input: Z = expand(out_dir + "{{prefix}}_gls_loadings.{{analysis}}.{chrom}.RDS", chrom = range(1, 23)),
            m = expand(l2_dir + "{chrom}.l2.M_5_50", chrom = range(1, 23)),
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
     output: out = out_dir + "{prefix}_gls_loadings.{analysis}.Rgcor.RDS"
