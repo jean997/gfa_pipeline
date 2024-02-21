@@ -15,7 +15,7 @@ to install Snakemake
 
 You will need to following R packages. 
 
-- `sumstatFactors`: Install using `devtools::install_github("jean997/sumstatFactors")`
+- `GFA`: Install using `devtools::install_github("jean997/GFA")`
 - `gwasvcf`: Install with `devtools::install_github("mrcieu/gwasvcf")`
 - `ieugwasr`: Install with `devtools::install_github("mrcieu/ieugwasr")`
 - `stringr`: Install with `install.packages`

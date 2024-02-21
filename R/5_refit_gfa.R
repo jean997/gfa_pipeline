@@ -1,4 +1,4 @@
-library(sumstatFactors)
+library(GFA)
 
 inp <- snakemake@input[["inp"]]
 outp <- snakemake@output[["out"]]

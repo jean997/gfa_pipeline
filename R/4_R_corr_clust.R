@@ -42,7 +42,7 @@ cond_num <- as.numeric(snakemake@params[["cond_num"]])-1
   if(!is.null(R$Rg)){newR$Rg <- R$Rg[keep,keep]}
   v <- eigen(newR$R, only.values = TRUE)$values
   if(max(v)/min(v) > cond_num | any(v < 0)){
-      newR$R <- sumstatFactors::condition(newR$R, cond_num, corr = TRUE)
+      newR$R <- GFA::condition(newR$R, cond_num, corr = TRUE)
   }else{
       newR$R <- cov2cor(newR$R)
   }
