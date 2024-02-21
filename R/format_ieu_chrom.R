@@ -3,7 +3,7 @@ require(gwasvcf)
 require(dplyr)
 require(stringr)
 require(readr)
-require(sumstatFactors)
+require(GFA)
 
 format_ieu_chrom <- function(file, chrom, af_thresh){
     stopifnot(af_thresh < 0.5)
