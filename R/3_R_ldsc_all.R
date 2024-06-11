@@ -11,6 +11,13 @@ z_files = unlist(snakemake@input[["Z"]])
 ld_files <- unlist(snakemake@input[["l2"]])
 m_files <- unlist(snakemake@input[["m"]])
 out <- snakemake@output[["out"]]
+cond_num = as.numeric(snakemake@params[["cond_num"]])
+
+if(!is.finite(cond_num)){
+  mwc <- FALSE
+}else{
+  mwc <- TRUE
+}
 
 ld <- purrr::map_dfr(1:22, function(c){
   read_table(ld_files[c])
@@ -47,10 +54,10 @@ R <- R_ldsc(Z_hat = Z_hat,
               ld_size = M,
               N = N,
               return_gencov = TRUE,
-              return_cor = TRUE,
-              make_well_conditioned = FALSE # this is done in cor_clust
+              make_well_conditioned = mwc,
+              cond_num = cond_num
               )
 
-ret <- list(R = R$Re, Rg = R$Rg, names = nmsz)
+ret <- list(R = R$Se, Rg = R$Sg, names = nmsz)
 saveRDS(ret, file=out)
 

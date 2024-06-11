@@ -10,7 +10,7 @@ source("R/format_ieu_chrom.R")
 
 c <- as.numeric(snakemake@wildcards[["chrom"]])
 gwas_info_file <- snakemake@input[["gwas_info"]]
-#nmiss_thresh <- as.numeric(snakemake@params[["nmiss_thresh"]])
+
 af_thresh <- as.numeric(snakemake@params[["af_thresh"]])
 sample_size_tol <- as.numeric(snakemake@params[["sample_size_tol"]])
 out <- snakemake@output[["out"]]
@@ -51,6 +51,7 @@ fulldat <- map(seq(nrow(info)),   function(i){
                         pos_name <- as_name(paste0(n, ".pos"))
                         z_name <- as_name(paste0(n, ".z"))
                         ss_name <- as_name(paste0(n, ".ss"))
+                        af_name <- as_name(paste0(n, ".af"))
 
                         dat$sample_size[is.na(dat$sample_size)] <- as.numeric(info$pub_sample_size)
                         dat <-dat %>%  dplyr::mutate(Z = beta_hat/se) %>%
@@ -58,7 +59,8 @@ fulldat <- map(seq(nrow(info)),   function(i){
                                dplyr::select(chrom, snp, REF, ALT,
                                               !!pos_name := pos,
                                               !!z_name := Z,
-                                              !!ss_name := sample_size)
+                                              !!ss_name := sample_size,
+                                              !!af_name := allele_freq)
                  }) %>%
        purrr::reduce(full_join, by = c("chrom", "snp", "REF", "ALT"))
 
@@ -74,6 +76,7 @@ miss <- fulldat %>%
         dplyr::select(ends_with(".z")) %>%
         is.na(.) %>%
         rowSums(.)
+
 #nmiss <- data.frame(snp = fulldat$snp, miss = miss)
 #ix <- which(miss <= nmiss_thresh)
 ix <- which(miss == 0)

@@ -20,6 +20,7 @@ format_ieu_chrom <- function(file, chrom, af_thresh){
                        "REF", "seqnames", "start",
                        p_value = "p_value",
                        sample_size = "SS",
+                       allele_freq = "AF",
                        compute_pval = TRUE)
 
 
@@ -98,6 +99,7 @@ format_flat_chrom <- function(file, chrom, af_thresh,
                        A2_name, chrom_name, pos_name,
                        p_value = p_value_name,
                        sample_size = sample_size_name,
+                       allele_freq = af_name,
                        compute_pval = TRUE)
 
     return(dat)
