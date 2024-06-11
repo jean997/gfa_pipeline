@@ -32,7 +32,7 @@ prefix_dict = config["input"]
 af_min = config["analysis"]["gfa"]["af_thresh"]
 sstol_max = config["analysis"]["gfa"]["sample_size_tol"]
 cond_num = "Inf" # conditioning happens in cor_clust step which is unique to gfa
-
+is_mvmr = 0
 
 
 include: "common_rules.smk"

@@ -1,7 +1,6 @@
-# How to do multiple analyses:
 
-# sum_stats is a csv file. A list of files is ok. If a list, label should also be a list.
-# label is the prefix that will be used for all files from the analysis
+# For each analysis the name given before the colon will be the label used. After the colon provide
+# a csv file containing file informaiton. The first trait in the file will be treated as the outcome
 input:
     test1: "test_data/test_traits1.csv"
     test2: "test_data/test_traits2.csv"
@@ -31,29 +30,33 @@ analysis:
       pthresh: [0.05]
       l2_dir: "eur_w_ld_chr/" # not a list
       cond_num: 1e3
-    # GFA options:
-    #   The GFA pipeline will run GFA on all of the tratits in the csv.
-    #       It will also compute the GLS weights for all SNPs that have complete data and compute the genetic correlation of the factors.
-    #   gfa_params: If "default", will use default parameters, otherwise provide a .RDS file containing a prameter list eg "list(max_iter = 500)".
-    #   max_snps: largest number of variants to allow
-    #   maxrep: If algorithm does not converge in maxiter iterations, the pipeline will try again this number of times. This allows restarting of non-converged fits.
-    #   gfa_seed: Seed for GFA. This can be a list, in which case multiple fits will be done using different seeds.
-    #   af_thresh: allele frequency threshold
-    #   sample_size_tol: Tolerance for sample size variability around the median sample size per trait. Let M_t be the median sample size for trait t. If
-    #              the sample size for SNP j in trait t is N_{j,t}, SNP j will be excluded unless (1-sample_size_tol)*M_t <= N_{j,t} <= (1 + sample_size_tol)*M_t
-    gfa:
-      gfa_params: "default" # not a list
-      max_snps: Inf # not a list
-      maxrep: 5 # not a list
-      gfa_seed: 1 # list ok
-      af_thresh: 0.01 # not a list
-      sample_size_tol: 0.1 # not a list
-      cor_clust: 1 # list ok
+   # MVMR options. Set run to True for the methods you want to run and False for the methods you don't want to run.
+    # Sub-sections provide options for each method.
+    # Outcome index  and exposure index specify the indices of traits treated as exposures and outcomes.
+    # You can use lists to perform more than one anlaysis.
+    mvmr:
+      af_thresh: 0
+      esmr:
+        run: True
+        p_thresh: [5e-08]
+        max_iter: 100
+      grapple:
+        run: True
+        p_thresh: [1e-5, 5e-8]
+        max_iter: 1e6
+      bee:
+        run: True
+        p_thresh: [5e-8]
+        pleio_pt: [0, 0.05]
+        max_iter: 100
+      ivw:
+        run: True
+        p_thresh: [5e-8]
 
 out:
     # Output data options:
     # data_dir: Directory to store reformatted data
     # output_dir: Where to store results
-    data_dir: "gfa_data/"
-    output_dir: "gfa_results/"
+    data_dir: "mvmr_data/"
+    output_dir: "mvmr_results/"
 

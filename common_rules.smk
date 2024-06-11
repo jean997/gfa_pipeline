@@ -52,7 +52,8 @@ rule ld_prune_plink:
            bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed"
     output: out = data_dir + "{prefix}_zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
     params: ref_path = config["analysis"]["ldprune"]["ref_path"],
-            pthresh = 1
+            pthresh = 1, 
+            is_mvmr = is_mvmr
     wildcard_constraints: chrom = r"\d+"
     script: 'R/2_ld_prune_chrom_plink.R'
 

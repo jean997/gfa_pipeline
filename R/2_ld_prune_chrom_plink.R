@@ -8,6 +8,7 @@ ref_path  <- snakemake@params[["ref_path"]]
 out <- snakemake@output[["out"]]
 p <- snakemake@wildcards[["p"]]
 pthresh <- as.numeric(snakemake@params[["pthresh"]])
+is_mvmr <- as.numeric(snakemake@params[["is_mvmr"]])
 
 if(!p %in% c("pvalue", "rank")){
   stop("Unknown prioritization option.\n")
@@ -17,6 +18,10 @@ if(!p %in% c("pvalue", "rank")){
 Z_hat <- X %>%
   select(ends_with(".z")) %>%
   as.matrix()
+
+if(is_mvmr == 1){
+  Z_hat <- Z_hat[,-1,drop = FALSE]
+}
 
 if(p == "pvalue"){
   zmax <- apply(abs(Z_hat), 1, function(x){max(x, na.rm=T)})
