@@ -30,11 +30,6 @@ l2_dir = config["analysis"]["R"]["l2_dir"]
 
 prefix_dict = dict(zip(config["input"]["label"], config["input"]["sum_stats"]))
 
-
-
-#ss = pd.read_csv(config["input"]["sum_stats"], na_filter=False)
-#prefix = config["input"]["label"] + "_"
-
 gfa_strings = expand("{mode}_gfaseed{s}_{method}",
                      mode = config["analysis"]["mode"],
                      s = config["analysis"]["gfa_seed"],
@@ -53,9 +48,6 @@ else:
 
 if "ldsc" in config["analysis"]["R"]["type"]:
     R_type.append("ldsc")
-
-if "ldsc_quick" in config["analysis"]["R"]["type"]:
-    R_type.append("ldsc_quick")
 
 if "none" in config["analysis"]["R"]["type"]:
     R_type.append("none")
@@ -85,7 +77,7 @@ def raw_data_input(wcs):
 def info_input(wcs):
     global prefix_dict
     return prefix_dict[wcs.prefix]
-  
+
 rule snp_table_chrom:
     input: files = raw_data_input, gwas_info = info_input
     output: out =  data_dir + "{prefix}_zmat.{chrom}.RDS"
@@ -116,13 +108,11 @@ rule ld_prune_plink:
 
 ####p-value threshold method
 
-rule R_pt:
+rule pt_R:
   input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23))
   output: out = data_dir + "{prefix}_R_estimate.ldpruned_r2{r2}_kb{kb}_{p}.R_pt{pt}.RDS"
   wildcard_constraints: pt = "[\d.]+"
   script: "R/4_R_pthresh.R"
-
-###ldsc without updated weights "ldsc_quick"
 
 
 ### None
@@ -148,9 +138,8 @@ rule cor_clust:
     wildcard_constraints:
            cc = "\d+(\.\d+)?"
     script: 'R/4_R_corr_clust.R'
-# Run GFA
-#
 
+# Run GFA
 def R_input(wcs):
     global data_dir
     if wcs.Rtype.startswith("pt"):
