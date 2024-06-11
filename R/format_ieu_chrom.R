@@ -95,8 +95,11 @@ format_flat_chrom <- function(file, chrom, af_thresh,
         beta_hat <- "beta"
     }
 
-    dat <- gwas_format(X, snp_name, beta_hat_name, se_name, A1_name,
-                       A2_name, chrom_name, pos_name,
+    dat <- gwas_format(X, snp_name, beta_hat_name, se_name,
+                       A1 = A1_name,
+                       A2 = A2_name,
+                       chrom = chrom_name,
+                       pos = pos_name,
                        p_value = p_value_name,
                        sample_size = sample_size_name,
                        allele_freq = af_name,

@@ -5,12 +5,10 @@ library(GFA)
 
 
 out <- snakemake@output[["out"]]
-mode <- snakemake@wildcards[["mode"]]
 R_est_file <- snakemake@input[["R"]]
 params_file <- snakemake@params[["params_file"]]
 max_snp <- as.numeric(snakemake@params[["max_snps"]])
 seed <- snakemake@wildcards[["fs"]]
-method <- snakemake@wildcards[["method"]]
 
 z_files = unlist(snakemake@input[["Z"]])
 
@@ -33,10 +31,6 @@ X <- map_dfr(z_files, readRDS)
 ntrait <- X %>%
           select(ends_with(".z")) %>%
           ncol()
-
-Z_hat <- X %>%
-         select(ends_with(".z")) %>%
-         as.matrix()
 
 
 if(nrow(X) > max_snp){
@@ -75,8 +69,8 @@ t <- system.time(f <- gfa_fit(Z_hat = Z_hat,
                                 N = N,
                                 R = R$R,
                                 params = params,
-                                mode = mode,
-                                method = method))
+                                mode = "z-score",
+                                method = "fixed_factors"))
 
 
 f$snps <- snps

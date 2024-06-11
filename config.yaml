@@ -33,7 +33,7 @@ analysis:
     af_thresh: 0.01
     sample_size_tol: 0.1
     R:
-        type: ["pt", "ldsc"] #,"ldsc" "ldsc_quick"]
+        type: ["ldsc"] # options are "pt", "ldsc", "none"
         pthresh: [0.05]
         l2_dir: "/nfs/turbo/sph-jvmorr/ld_reference_files/ldsc_reference_files/eur_w_ld_chr/"
         cor_clust: [1, 0.98, 0.95]
@@ -41,9 +41,7 @@ analysis:
 out:
     # Output data options:
     # data_dir: Directory to store reformatted data
-    # formatted_gwas_dir: Where do store formatted gwas data
     # output_dir: Where to store results
     data_dir: "data/"
-    formatted_gwas_dir: "/nfs/turbo/sph-jvmorr/gwas_summary_statistics/formatted_data/gfa/"
     output_dir: "results/"
 

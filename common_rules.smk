@@ -24,6 +24,7 @@ if "none" in config["analysis"]["R"]["type"]:
 
 # This produces one data frame per chromosome with columns for snp info
 # and columns <study>.z, <study>.ss for z-score and sample size of each snp
+## rule for getting list of raw data files
 def raw_data_input(wcs):
     global prefix_dict
     mycsv = prefix_dict[wcs.prefix]
@@ -33,13 +34,13 @@ def raw_data_input(wcs):
 def info_input(wcs):
     global prefix_dict
     return prefix_dict[wcs.prefix]
-
+  
 rule snp_table_chrom:
     input: files = raw_data_input, gwas_info = info_input
     output: out =  data_dir + "{prefix}_zmat.{chrom}.RDS"
     params: af_thresh = af_min,
             sample_size_tol = sstol_max
-    wildcard_constraints: chrom = "\d+"
+    wildcard_constraints: chrom = r"\d+"
     script: 'R/1_combine_and_format.R'
 
 
@@ -52,7 +53,7 @@ rule ld_prune_plink:
     output: out = data_dir + "{prefix}_zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
     params: ref_path = config["analysis"]["ldprune"]["ref_path"],
             pthresh = 1
-    wildcard_constraints: chrom = "\d+"
+    wildcard_constraints: chrom = r"\d+"
     script: 'R/2_ld_prune_chrom_plink.R'
 
 
@@ -67,7 +68,8 @@ rule ld_prune_plink:
 rule pt_R:
   input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_r2{{r2}}_kb{{kb}}_{{p}}.{chrom}.RDS", chrom = range(1, 23))
   output: out = data_dir + "{prefix}_R_estimate.ldpruned_r2{r2}_kb{kb}_{p}.R_pt{pt}.RDS"
-  wildcard_constraints: pt = "[\d.]+"
+  params: cond_num = cond_num
+  wildcard_constraints: pt = r"[\d.]+"
   script: "R/3_R_pthresh.R"
 
 
@@ -85,6 +87,6 @@ rule R_ldsc_full:
            l2 = expand(l2_dir + "{chrom}.l2.ldscore.gz", chrom = range(1, 23))
     output: out = data_dir + "{prefix}_R_estimate.R_ldsc.RDS"
     params: cond_num = cond_num
-    wildcard_constraints: pt = "[\d.]+"
+    wildcard_constraints: pt = r"[\d.]+"
     script: "R/3_R_ldsc_all.R"
 

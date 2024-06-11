@@ -48,7 +48,7 @@ fulldat <- map(seq(nrow(info)),   function(i){
                            dat <- filter(dat, sample_size > (1-sample_size_tol)*m & sample_size < (1 + sample_size_tol)*m)
                         }
                         n <- info$name[i]
-                        pos_name <- as_name(paste0(n, ".pos"))
+                        se_name <- as_name(paste0(n, ".se"))
                         z_name <- as_name(paste0(n, ".z"))
                         ss_name <- as_name(paste0(n, ".ss"))
                         af_name <- as_name(paste0(n, ".af"))
@@ -57,8 +57,8 @@ fulldat <- map(seq(nrow(info)),   function(i){
                         dat <-dat %>%  dplyr::mutate(Z = beta_hat/se) %>%
                                dplyr::rename(REF = A2, ALT = A1) %>%
                                dplyr::select(chrom, snp, REF, ALT,
-                                              !!pos_name := pos,
                                               !!z_name := Z,
+                                              !!se_name := se,
                                               !!ss_name := sample_size,
                                               !!af_name := allele_freq)
                  }) %>%
