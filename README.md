@@ -78,7 +78,7 @@ You will use the config file that corresponds to the pipeline you are running. I
 Each config file contains three main sections: `input` describing input files, `analysis` describing analysis options and `otuput` specifying output directories. 
 
 #### 3.3.1 The `input` section
-For GFA and MVMR, for each analysis include an entry of the form `analysis_name: "description_file.csv"` in the input section. For example, if you want to run two analyses corresponding to two description files, your input seciton may look like 
+For GFA and MVMR, for each analysis include an entry of the form `analysis_name: "description_file.csv"` in the input section. For example, if you want to run two analyses corresponding to two description files, your input section may look like 
 
 ```
 input:
@@ -109,6 +109,10 @@ All three pipelines have two common sections, `ldprune` describing how the data 
 All three pipelines produce two types of output, "data" and "results". Specify directories to store these in. 
 
 ## Step 4: Run Your Pipeline
+
+### Note about temporary files
+
+Each of the pipelines will create a full copy of all of the GWAS data in the formatting step. In order to prevent accumulating many copies of data, the pipeline treats these as temporary files and deletes them when the analysis is completed. However, if you are planning to add on to an analysis (for example for NESMR if you think you will add more templates, or for MVMR you think you might like to add more analysis options), it can be useful to keep the data files so that you don't have to recreate them when you run with new options. To prevent deleting temporary data files add the `--notemp` flag to the snakemake command.
 
 ### 4.1 Run the pipeline at the command line
 To run the pipeline at the command line, first check that all is well with your config files by running a dry run using 
@@ -155,4 +159,4 @@ Pipeline results will end up in the folder specified in the output options of yo
 
 For the GFA pipeline, you will see a lot of files. For each analysis, the main GFA results are in a file ending in `.final.RDS`. You will also see files for GLS weights calculated by chromosome and the genetic correlation of the estimated factors. You will also see some text files. These are used by the pipeline to check convergence and can be ignored. 
 
-For the MVMR and NESMR pipeline, you will see one output file per analysis. The file names should be fairly self explanatory. For example the file `test1_ivw_5e-08.ldpruned_r20.01_kb1000_pvalue.R_ldsc.RDS` is the analysis of the traits in the `test1` description file using IVW-regression with a p-value threshold of `5e-8`. The rest of teh filename describes the LD-pruning and nuisance parameter estimation options.
+For the MVMR and NESMR pipeline, you will see one output file per analysis. The file names should be fairly self explanatory. For example the file `test1_ivw_5e-08.ldpruned_r20.01_kb1000_pvalue.R_ldsc.RDS` is the analysis of the traits in the `test1` description file using IVW-regression with a p-value threshold of `5e-8`. The rest of the filename describes the LD-pruning and nuisance parameter estimation options.
