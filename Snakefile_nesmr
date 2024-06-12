@@ -1,0 +1,70 @@
+# Snakemake pipeline for running MVMR
+#
+#
+# LICENSE: CC0. Do what you want with the code, but it has no guarantees.
+#          https://creativecommons.org/share-your-work/public-domain/cc0/
+#
+#
+# source activate cause_large
+#
+# ./run_snakemake.sh
+#
+# don't forget to update cluster.yaml
+
+
+import pandas as pd
+
+from snakemake.utils import validate
+
+localrules: all
+###### Load configuration file
+configfile: "config_nesmr.yaml"
+#validate(config, schema="schemas/config.schema.yaml")
+
+af_min = config["analysis"]["nesmr"]["af_thresh"]
+sstol_max = "Inf"
+
+cond_num = config["analysis"]["R"]["cond_num"]
+
+# File organization
+data_dir = config["out"]["data_dir"] #where the data is
+out_dir = config["out"]["output_dir"] #where results will go
+
+prefix_dict = dict(zip(config['input'].keys(), 
+                       [config['input'][k]['trait_csv'] for k in config['input'].keys()]))
+is_mvmr = 0
+include: "common_rules.smk"
+                   
+## Set up NESMR output
+
+analysis_strings = [f'{k}_template{v+1}' for k, vs in config['input'].items() for v in range(len(vs['templates']))]
+
+
+
+inp = expand(out_dir + "{prefix}_nesmr_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = analysis_strings,
+                        pt = config["analysis"]["nesmr"]["p_thresh"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings)
+
+rule all:
+    input: inp
+
+def R_input(wcs):
+    global data_dir
+    if wcs.Rstring.startswith("pt"):
+        return f'{data_dir}{wcs.prefix}_R_estimate.ldpruned_{wcs.ldstring}.R_{wcs.Rstring}.RDS'
+    else:
+        return f'{data_dir}{wcs.prefix}_R_estimate.R_{wcs.Rstring}.RDS'
+
+def get_template_file(wcs):
+    global config
+    return config['input'][wcs.prefix]['templates'][int(wcs.i)-1]
+  
+rule nesmr:
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input,
+           template = get_template_file
+    params: max_iter = config["analysis"]["nesmr"]["max_iter"]
+    output:  out = out_dir + "{prefix}_template{i}_nesmr_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_nesmr.R'

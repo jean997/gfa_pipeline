@@ -1,0 +1,51 @@
+
+# For each analysis the name given before the colon will be the label used. After the colon provide
+# a csv file containing file informaiton. The first trait in the file will be treated as the outcome
+input:
+    test1:
+      trait_csv: "test_data/test_traits1.csv"
+      templates: ["test_data/trait1_template1.RDS", "test_data/trait1_template2.RDS"]
+    test2:
+      trait_csv: "test_data/test_traits2.csv"
+      templates: ["test_data/trait2_template1.RDS", "test_data/trait2_template2.RDS", "test_data/trait2_template3.RDS"]
+analysis:
+    # LD pruning options: Required for all types of analysis
+    # r2_thresh: threshold for pairwise r^2 between variants
+    # clump_kb Maximum distance for pruning.
+    # ref_path Path to plink format reference data
+    # ld_prioritization: either pvalue or rank
+    ldprune:
+        r2_thresh: 0.01
+        clump_kb: [1000]
+        ld_prioritization: ["pvalue"] # "pvalue" or "rank"
+        ref_path: "1kg_plink/EUR"
+    # R options: required for all types of analysis
+    # Specifies options for how nuisance correlation is estimated.
+    # Type can be either "ldsc", "pt", or "none". LDSC or pt will both work. pt is faster and generally gives nearly identical results to LDSC.
+    # type is a list - one analysis will be run for each element of the list.
+    # if type includes "pt", pthresh must be specified.
+    # l2_dir is required if type includes "ldsc"
+    # The cor_clust option is useful when analyzing highly correlated traits from overlapping samples. Traits will be clustered greedily and a
+    # representative trait selected so that no pair of traits have nuisance correlation greater than the vlaue specified. If you don't
+    # need to perform clustering, just set cor_clust to 1.
+    R:
+      type: ["ldsc", "pt"] # options are "pt", "ldsc", "none"
+      pthresh: [0.05]
+      l2_dir: "eur_w_ld_chr/" # not a list
+      cond_num: 1e3
+   # MVMR options. Set run to True for the methods you want to run and False for the methods you don't want to run.
+    # Sub-sections provide options for each method.
+    # Outcome index  and exposure index specify the indices of traits treated as exposures and outcomes.
+    # You can use lists to perform more than one anlaysis.
+    nesmr:
+      p_thresh: [5e-08]
+      max_iter: 100
+      af_thresh: 0
+
+out:
+    # Output data options:
+    # data_dir: Directory to store reformatted data
+    # output_dir: Where to store results
+    data_dir: "nesmr_data/"
+    output_dir: "nesmr_results/"
+
