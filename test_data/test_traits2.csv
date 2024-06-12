@@ -1,0 +1,5 @@
+name,raw_data_path,pub_sample_size,effect_is_or,snp,A1,A2,beta_hat,se,pos,p_value,sample_size,chrom,af
+van-der-Harst_2017_29212778__CAD,test_data/ebi-a-GCST005195.vcf.gz,547261,FALSE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+Elsworth_2018_0__BMI,test_data/ukb-b-19953.vcf.gz,461460,FALSE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+Liu_2019_30643251__smoking-initiation,test_data/ieu-b-4877.vcf.gz,607291,FALSE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+Said_2022_35459240__CRP,test_data/GCST90029070_buildGRCh37.tsv.gz,575531,FALSE,variant_id,effect_allele,other_allele,beta,standard_error,base_pair_location,p_value,NA,chromosome,NA
