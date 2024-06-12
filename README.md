@@ -128,9 +128,13 @@ The flag `-c1` specifies to use one core. You can use more cores and run more jo
 
 ### 4.2 Run the pipeline on a compute cluster
 
-Running at the command line is ok if you are using a small number of traits, but we generally recommend running the pipelines on a compute cluster. To do this, first take a look at the `cluster.yaml` file. This file specifies the cluster resources alotted to each step. The values are set at reasonable numbers that work for many analyses. However, if you find that you are getting errors related to running out of time or memory, you may need to change these. Next take a look at the file `run-snakemake-{pipeline}.sh`. This file contains a command for executing snakemake so that it will submit jobs to your cluster. If your cluster doesn't use slurm, you will need to edit the argument to `--cluster`. You may also need to include different options in this argument. For example, your cluster may not use an account argument, and if it does, your account may not be `jvmorr0`. 
+Running at the command line is ok if you are using a small number of traits, but we generally recommend running the pipelines on a compute cluster. 
 
-To run the pipeline use 
+If you are running on a compute cluster, it is still a good idea to do a dry run at the command line as above to make sure everything is set up to run. 
+
+Next, take a look at the `cluster.yaml` file. This file specifies the cluster resources alotted to each step. The values are set at reasonable numbers that work for many analyses. However, if you find that you are getting errors related to running out of time or memory, you may need to change these. You may be able to use less memory for smaller analyses.  Next, take a look at the file `run-snakemake-{pipeline}.sh`. This file contains a command for executing snakemake so that it will submit jobs to your cluster. If your cluster doesn't use slurm, you will need to edit the argument to `--cluster`. Take a look at the Snakemake documentation for more details. If your cluster does use slurm, this command will probably work for you, but you will probably need to either change or delete the `--account` flag. 
+
+To run the pipeline use, 
 ```
 ./run-snakemake-{pipeline}.sh 
 ```
