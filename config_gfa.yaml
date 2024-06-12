@@ -10,23 +10,19 @@ analysis:
     # ref_path Path to plink format reference data
     # ld_prioritization: either pvalue or rank
     ldprune:
-        r2_thresh: 0.01
-        clump_kb: [1000]
-        ld_prioritization: ["pvalue"] # "pvalue" or "rank"
-        ref_path: "1kg_plink/EUR"
+        r2_thresh: 0.01 # list ok
+        clump_kb: 1000 # list ok
+        ld_prioritization: ["pvalue"] # list ok,  "pvalue" or "rank"
+        ref_path: "1kg_plink/EUR" # list not ok
     # R options: required for all types of analysis
     # Specifies options for how nuisance correlation is estimated.
     # Type can be either "ldsc", "pt", or "none". LDSC or pt will both work. pt is faster and generally gives nearly identical results to LDSC.
-    # type is a list - one analysis will be run for each element of the list.
     # if type includes "pt", pthresh must be specified.
-    # l2_dir is required if type includes "ldsc"
-    # The cor_clust option is useful when analyzing highly correlated traits from overlapping samples. Traits will be clustered greedily and a
-    # representative trait selected so that no pair of traits have nuisance correlation greater than the vlaue specified. If you don't
-    # need to perform clustering, just set cor_clust to 1.
+    # l2_dir is required if type includes "ldsc". This is the directory containing LD-scores
     R:
-      type: ["ldsc", "pt"] # options are "pt", "ldsc", "none"
-      pthresh: [0.05]
-      l2_dir: "eur_w_ld_chr/" # not a list
+      type: ["ldsc", "pt"] # options are "pt", "ldsc", "none", lidt ok
+      pthresh: [0.05] # list ok
+      l2_dir: "eur_w_ld_chr/" # list not ok
       cond_num: 1e3
     # GFA options:
     #   The GFA pipeline will run GFA on all of the tratits in the csv.
@@ -38,6 +34,9 @@ analysis:
     #   af_thresh: allele frequency threshold
     #   sample_size_tol: Tolerance for sample size variability around the median sample size per trait. Let M_t be the median sample size for trait t. If
     #              the sample size for SNP j in trait t is N_{j,t}, SNP j will be excluded unless (1-sample_size_tol)*M_t <= N_{j,t} <= (1 + sample_size_tol)*M_t
+    #   The cor_clust option is useful when analyzing highly correlated traits from overlapping samples. Traits will be clustered greedily and a
+    #         representative trait selected so that no pair of traits have nuisance correlation greater than the vlaue specified. If you don't
+    #         need to perform clustering, just set cor_clust to 1.
     gfa:
       gfa_params: "default" # not a list
       max_snps: Inf # not a list

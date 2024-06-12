@@ -37,7 +37,7 @@ def info_input(wcs):
   
 rule snp_table_chrom:
     input: files = raw_data_input, gwas_info = info_input
-    output: out =  data_dir + "{prefix}_zmat.{chrom}.RDS"
+    output: out =  temp(data_dir + "{prefix}_zmat.{chrom}.RDS")
     params: af_thresh = af_min,
             sample_size_tol = sstol_max
     wildcard_constraints: chrom = r"\d+"
@@ -50,7 +50,7 @@ rule snp_table_chrom:
 rule ld_prune_plink:
     input: zmat = data_dir + "{prefix}_zmat.{chrom}.RDS",
            bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed"
-    output: out = data_dir + "{prefix}_zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
+    output: out = temp(data_dir + "{prefix}_zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS")
     params: ref_path = config["analysis"]["ldprune"]["ref_path"],
             pthresh = 1, 
             is_mvmr = is_mvmr
