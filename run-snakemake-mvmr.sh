@@ -1,8 +1,8 @@
 #!/bin/bash
 
 mkdir -p log
-mkdir -p results
 snakemake \
+   -s Snakefile_mvmr \
    --keep-going \
    --jobs 96 \
    --max-jobs-per-second 5 \
