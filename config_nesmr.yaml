@@ -16,6 +16,7 @@ input:
     test2:
       trait_csv: "test_data/test_traits2.csv"
       templates: ["test_data/trait2_template1.RDS", "test_data/trait2_template2.RDS", "test_data/trait2_template3.RDS"]
+
 analysis:
     # LD pruning options:
     # r2_thresh: threshold for pairwise r^2 between variants
@@ -45,7 +46,7 @@ analysis:
     nesmr:
       p_thresh: [5e-08]
       max_iter: 100
-      af_thresh: 0
+      af_thresh: 0 # not a list
 
 out:
     # Output data options:

@@ -10,9 +10,7 @@ snp_table_chrom:
 
 ld_prune_plink:
     mem: "10G"
-    time:  "1:00:00"
 
 R_ldsc_full:
     mem: "20G"
-    time: "1-00:00:00"
 
