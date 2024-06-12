@@ -1,12 +1,12 @@
 library(dplyr)
 library(purrr)
-library(esmr)
+library(GRAPPLE)
+library(stringr)
 
-args <- commandArgs(trailingOnly=TRUE)
 
 out <- snakemake@output[["out"]]
 R_est_file <- snakemake@input[["R"]]
-pt <- snakemake@wildcards[["pt"]]
+pt <- as.numeric(snakemake@wildcards[["pt"]])
 z_files = unlist(snakemake@input[["Z"]])
 niter = snakemake@params[["max_iter"]]
 #seed <- snakemake@wildcards[["fs"]]
@@ -18,15 +18,15 @@ niter = snakemake@params[["max_iter"]]
 X <- map_dfr(z_files, readRDS)
 
 ntrait <- X %>%
-  select(ends_with(".z")) %>%
+  dplyr::select(ends_with(".z")) %>%
   ncol()
 
 Z_hat <- X %>%
-  select(ends_with(".z")) %>%
+  dplyr::select(ends_with(".z")) %>%
   as.matrix()
 
 se_hat <- X %>%
-  select(ends_with(".se")) %>%
+  dplyr::select(ends_with(".se")) %>%
   as.matrix()
 
 beta_hat <- Z_hat*se_hat
@@ -51,11 +51,14 @@ names(grapple_dat) <- c("gamma_out", paste0("gamma_exp", 1:(p-1)),
 
 grapple_dat$selection_pvals <- apply(pvals[,-1, drop = F],1, min)
 
-# ix <- which(grapple_dat$selection_pvals < p_thresh)
-# if(length(ix) > 5000){
-#   ixn <- sample(ix, size = 5000, replace = FALSE)
-#   grapple_dat <- grapple_dat[ixn,]
-# }
+ix <- which(grapple_dat$selection_pvals < pt)
+
+if(length(ix) > 5000){
+   ixn <- sample(ix, size = 5000, replace = FALSE)
+   grapple_dat <- grapple_dat[ixn,]
+}else{
+   grapple_dat <- grapple_dat[ix,]
+}
 
 
 t <- system.time(

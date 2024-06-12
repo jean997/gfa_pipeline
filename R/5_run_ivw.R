@@ -1,13 +1,11 @@
 library(dplyr)
 library(purrr)
-library(esmr)
-
-args <- commandArgs(trailingOnly=TRUE)
+library(stringr)
+library(TwoSampleMR)
 
 out <- snakemake@output[["out"]]
 R_est_file <- snakemake@input[["R"]]
-pt <- snakemake@wildcards[["pt"]]
-pl_pt <- snakemake@wildcards[["pt"]]
+pt <- as.numeric(snakemake@wildcards[["pt"]])
 z_files = unlist(snakemake@input[["Z"]])
 #seed <- snakemake@wildcards[["fs"]]
 #set.seed(seed)
@@ -18,15 +16,15 @@ z_files = unlist(snakemake@input[["Z"]])
 X <- map_dfr(z_files, readRDS)
 
 ntrait <- X %>%
-  select(ends_with(".z")) %>%
+  dplyr::select(ends_with(".z")) %>%
   ncol()
 
 Z_hat <- X %>%
-  select(ends_with(".z")) %>%
+  dplyr::select(ends_with(".z")) %>%
   as.matrix()
 
 se_hat <- X %>%
-  select(ends_with(".se")) %>%
+  dplyr::select(ends_with(".se")) %>%
   as.matrix()
 
 beta_hat <- Z_hat*se_hat
@@ -52,15 +50,16 @@ Rcor <- cov2cor(R$R)
 pmin <- apply(pvals[,-1, drop = F], 1, min)
 ix <- which(pmin < pt)
 
-exp <- as.matrix(beta_hat[ix, 2:p])
-colnames(exp) <- nms[-1]
-hdat <-  list(exposure_beta = beta_hat[, 2:p],
+colnames(beta_hat) <- nms
+
+
+hdat <-  list(exposure_beta = beta_hat[ix, 2:p],
               exposure_pval = pvals[ix, 2:p],
               exposure_se = se_hat[ix,2:p],
-              outcome_beta = beta_hat[ix,1,drop = FALSE],
-              outcome_pval = pvals[ix,1, drop = FALSE],
-              outcome_se = se_hat[ix,1, drop = FALSE],
-              expname = data.frame(id.exposure = nms, exposure = nms),
+              outcome_beta = beta_hat[ix,1],
+              outcome_pval =pvals[ix,1],
+              outcome_se = se_hat[ix,1],
+              expname = data.frame(id.exposure = nms[-1], exposure = nms[-1]),
               outname = data.frame(id.outcome = nms[1], outcome = nms[1]))
 
 t1 <- system.time(res1 <- mv_multiple(hdat,
