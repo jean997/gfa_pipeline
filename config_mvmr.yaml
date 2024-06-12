@@ -42,7 +42,7 @@ analysis:
         max_iter: 100
       grapple:
         run: True
-        p_thresh: [1e-5, 5e-8]
+        p_thresh: [5e-8]
         max_iter: 1e6
       bee:
         run: True

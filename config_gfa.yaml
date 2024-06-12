@@ -1,7 +1,4 @@
-# How to do multiple analyses:
 
-# sum_stats is a csv file. A list of files is ok. If a list, label should also be a list.
-# label is the prefix that will be used for all files from the analysis
 input:
     test1: "test_data/test_traits1.csv"
     test2: "test_data/test_traits2.csv"
