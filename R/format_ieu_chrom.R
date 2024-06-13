@@ -86,8 +86,10 @@ format_flat_chrom <- function(file, chrom, af_thresh,
     X <- read_table(pipe(awk_cmd), col_types = eval(parse(text = col_string)), col_names = names(h))
 
     if(!is.na(af_name)){
-        ix <- which(X[[af_name]] > af_thresh & X[[af_name]] < (1-af_thresh))
-        X <- X[ix,]
+        if(!all(is.na(X[[af_name]]))){
+          ix <- which(X[[af_name]] > af_thresh & X[[af_name]] < (1-af_thresh))
+          X <- X[ix,]
+        }
     }
 
     if(effect_is_or){
