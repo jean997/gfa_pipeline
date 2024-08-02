@@ -1,4 +1,3 @@
-library(flashier)
 library(readr)
 
 fit <- readRDS(snakemake@input[[1]])

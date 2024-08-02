@@ -1,0 +1,57 @@
+
+# Provide one entry in input for each unique set of traits.
+# The main heading gives the label used for the analysis.
+# Within each section, provide headings
+# trait_csv: A csv file containing the study description file.
+# templates: A list of .RDS files containing direct effect templates.
+# The order of traits in the study description file should be the same as the
+# assumed order in the template files.
+
+#   The NESMR pipeline will run NESMR for each combination of traits and templates.
+
+input:
+    test1:
+      trait_csv: "test_data/test_traits1.csv"
+      templates: ["test_data/trait1_template1.RDS", "test_data/trait1_template2.RDS"]
+    test2:
+      trait_csv: "test_data/test_traits2.csv"
+      templates: ["test_data/trait2_template1.RDS", "test_data/trait2_template2.RDS", "test_data/trait2_template3.RDS"]
+
+analysis:
+    # LD pruning options:
+    # r2_thresh: threshold for pairwise r^2 between variants
+    # clump_kb: Maximum distance for pruning.
+    # ref_path: Path to plink format reference data (.bim .bed .fam)
+    # ld_prioritization: either pvalue or rank, maybe eventually sd
+    ldprune:
+        r2_thresh: 0.01 # list ok
+        clump_kb: 1000 # list ok
+        ld_prioritization: ["pvalue"] # list ok,  "pvalue" or "rank"
+        ref_path: "1kg_plink/EUR" # list not ok
+    # R options:
+    # Specifies options for how nuisance correlation is estimated.
+    # Type can be either "ldsc", "pt", or "none". LDSC or pt will both work.
+    #   pt is faster and generally gives very similar results to LDSC.
+    # if type includes "pt", pthresh must be specified.
+    # l2_dir is required if type includes "ldsc". This is the directory containing LD-scores
+    # cond_num: Maximum condition number. R is estimated pairwise using either ldsc or p-thresholding strategy.
+    #     the result may not be positive definite or may have very high condition number. The estimated
+    #     matrix will be projected to the neares positive definite matrix with condition number less than cond_num.
+    R:
+      type: ["ldsc", "pt"] # options are "pt", "ldsc", "none"
+      pthresh: [0.05]
+      l2_dir: "eur_w_ld_chr/" # not a list
+      cond_num: 1e3
+   # NESMR options
+    nesmr:
+      p_thresh: [5e-08]
+      max_iter: 100
+      af_thresh: 0 # not a list
+
+out:
+    # Output data options:
+    # data_dir: Directory to store reformatted data
+    # output_dir: Where to store results
+    data_dir: "nesmr_data/"
+    output_dir: "nesmr_results/"
+

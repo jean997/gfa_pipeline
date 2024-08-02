@@ -1,0 +1,107 @@
+# Snakemake pipeline for running MVMR
+#
+#
+# LICENSE: CC0. Do what you want with the code, but it has no guarantees.
+#          https://creativecommons.org/share-your-work/public-domain/cc0/
+#
+#
+# source activate cause_large
+#
+# ./run_snakemake.sh
+#
+# don't forget to update cluster.yaml
+
+
+import pandas as pd
+
+from snakemake.utils import validate
+
+localrules: all
+###### Load configuration file
+configfile: "config_mvmr.yaml"
+#validate(config, schema="schemas/config.schema.yaml")
+
+af_min = config["analysis"]["mvmr"]["af_thresh"]
+sstol_max = "Inf"
+
+cond_num = config["analysis"]["R"]["cond_num"]
+
+# File organization
+data_dir = config["out"]["data_dir"] #where the data is
+out_dir = config["out"]["output_dir"] #where results will go
+
+prefix_dict = config["input"]
+is_mvmr = 1
+include: "common_rules.smk"
+                   
+## Set up MVMR output
+if config["analysis"]["mvmr"]["esmr"]["run"] == True:
+  inp = expand(out_dir + "{prefix}_esmr_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = prefix_dict.keys(),
+                        pt = config["analysis"]["mvmr"]["esmr"]["p_thresh"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings)
+else:
+  inp = []
+
+if config["analysis"]["mvmr"]["grapple"]["run"] == True:
+  inp.extend(expand(out_dir + "{prefix}_grapple_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = prefix_dict.keys(),
+                        pt = config["analysis"]["mvmr"]["grapple"]["p_thresh"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings))
+
+if config["analysis"]["mvmr"]["bee"]["run"] == True:
+  inp.extend(expand(out_dir + "{prefix}_bee_{pt}_{plpt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = prefix_dict.keys(),
+                        pt = config["analysis"]["mvmr"]["bee"]["p_thresh"],
+                        plpt = config["analysis"]["mvmr"]["bee"]["pleio_pt"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings))       
+                        
+if config["analysis"]["mvmr"]["ivw"]["run"] == True:
+  inp.extend(expand(out_dir + "{prefix}_ivw_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = prefix_dict.keys(),
+                        pt = config["analysis"]["mvmr"]["ivw"]["p_thresh"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings))      
+
+
+rule all:
+    input: inp
+
+def R_input(wcs):
+    global data_dir
+    if wcs.Rstring.startswith("pt"):
+        return f'{data_dir}{wcs.prefix}_R_estimate.ldpruned_{wcs.ldstring}.R_{wcs.Rstring}.RDS'
+    else:
+        return f'{data_dir}{wcs.prefix}_R_estimate.R_{wcs.Rstring}.RDS'
+
+
+rule esmr:
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input
+    params: max_iter = config["analysis"]["mvmr"]["esmr"]["max_iter"]
+    output:  out = out_dir + "{prefix}_esmr_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_esmr.R'
+
+rule grapple:
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input
+    params: max_iter = config["analysis"]["mvmr"]["grapple"]["max_iter"]
+    output:  out = out_dir + "{prefix}_grapple_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_grapple.R'  
+
+rule bee:
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input
+    params: max_iter = config["analysis"]["mvmr"]["bee"]["max_iter"]
+    output:  out = out_dir + "{prefix}_bee_{pt}_{plpt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_bee.R'  
+
+rule ivw:
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input
+    params: max_iter = config["analysis"]["mvmr"]["esmr"]["max_iter"]
+    output:  out = out_dir + "{prefix}_ivw_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_ivw.R'

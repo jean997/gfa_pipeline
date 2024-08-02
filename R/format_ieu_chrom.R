@@ -20,6 +20,7 @@ format_ieu_chrom <- function(file, chrom, af_thresh){
                        "REF", "seqnames", "start",
                        p_value = "p_value",
                        sample_size = "SS",
+                       allele_freq = "AF",
                        compute_pval = TRUE)
 
 
@@ -85,8 +86,10 @@ format_flat_chrom <- function(file, chrom, af_thresh,
     X <- read_table(pipe(awk_cmd), col_types = eval(parse(text = col_string)), col_names = names(h))
 
     if(!is.na(af_name)){
-        ix <- which(X[[af_name]] > af_thresh & X[[af_name]] < (1-af_thresh))
-        X <- X[ix,]
+        if(!all(is.na(X[[af_name]]))){
+          ix <- which(X[[af_name]] > af_thresh & X[[af_name]] < (1-af_thresh))
+          X <- X[ix,]
+        }
     }
 
     if(effect_is_or){
@@ -94,10 +97,14 @@ format_flat_chrom <- function(file, chrom, af_thresh,
         beta_hat <- "beta"
     }
 
-    dat <- gwas_format(X, snp_name, beta_hat_name, se_name, A1_name,
-                       A2_name, chrom_name, pos_name,
+    dat <- gwas_format(X, snp_name, beta_hat_name, se_name,
+                       A1 = A1_name,
+                       A2 = A2_name,
+                       chrom = chrom_name,
+                       pos = pos_name,
                        p_value = p_value_name,
                        sample_size = sample_size_name,
+                       allele_freq = af_name,
                        compute_pval = TRUE)
 
     return(dat)
