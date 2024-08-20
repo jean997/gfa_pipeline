@@ -38,7 +38,7 @@ Once you have the directory you want to use, clone this repository into it using
 
 
 ```
-git clone -b refactor https://github.com/jean997/gfa_pipeline.git
+git clone https://github.com/jean997/gfa_pipeline.git
 ```
 
 This will create a directory called `gfa_pipeline` in your analysis directory. You can either change to this directory and do your work there, or move everything up one level with `mv gfa_pipeline/* .`. 
