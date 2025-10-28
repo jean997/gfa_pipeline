@@ -41,6 +41,7 @@ rule snp_table_chrom:
     params: af_thresh = af_min,
             sample_size_tol = sstol_max
     wildcard_constraints: chrom = r"\d+"
+    resources: mem_mb = 20000
     script: 'R/1_combine_and_format.R'
 
 
@@ -55,6 +56,7 @@ rule ld_prune_plink:
             pthresh = 1, 
             is_mvmr = is_mvmr
     wildcard_constraints: chrom = r"\d+"
+    resources: mem_mb = 10000
     script: 'R/2_ld_prune_chrom_plink.R'
 
 

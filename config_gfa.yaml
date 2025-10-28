@@ -54,7 +54,6 @@ analysis:
       gfa_seed: 1 # list ok
       af_thresh: 0.01 # not a list
       sample_size_tol: 0.1 # not a list
-      cor_clust: 1 # list ok
 
 out:
     # Output data options:
