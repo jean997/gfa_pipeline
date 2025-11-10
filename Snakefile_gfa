@@ -17,7 +17,7 @@ import os
 
 from snakemake.utils import validate
 
-localrules: all, check_success, fail, status, final_file, cor_clust
+localrules: all, check_success, fail, status, final_file
 ###### Load configuration file
 configfile: "config_gfa.yaml"
 #validate(config, schema="schemas/config.schema.yaml")
