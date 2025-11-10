@@ -31,21 +31,17 @@ prefix_dict = config["input"]
 
 af_min = config["analysis"]["gfa"]["af_thresh"]
 sstol_max = config["analysis"]["gfa"]["sample_size_tol"]
-cond_num = "Inf" # conditioning happens in cor_clust step which is unique to gfa
+
 is_mvmr = 0
 
 
 include: "common_rules.smk"
 
-R_strings = expand("{rt}_cc{cc}",
-                   rt = R_strings,
-                   cc = config["analysis"]["gfa"]["cor_clust"])
 
-                   
 ## Set up GFA output
 gfa_strings = expand("gfaseed{s}",
                      s = config["analysis"]["gfa"]["gfa_seed"])
-                     
+
 inp = expand(out_dir + "{prefix}_gls_loadings.{gfas}.ldpruned_{lds}.R_{rs}.Rgcor.RDS",
                 prefix = prefix_dict.keys(),
                 gfas = gfa_strings,
@@ -54,14 +50,6 @@ inp = expand(out_dir + "{prefix}_gls_loadings.{gfas}.ldpruned_{lds}.R_{rs}.Rgcor
 
 rule all:
     input: inp
-
-rule cor_clust:
-    input: R = data_dir + "{prefix}_R_estimate.{rstring}.RDS"
-    output: out = data_dir + "{prefix}_R_estimate.{rstring}_cc{cc}.RDS"
-    params: cond_num = config["analysis"]["R"]["cond_num"]
-    wildcard_constraints:
-           cc = r"\d+(\.\d+)?"
-    script: 'R/4_R_corr_clust.R'
 
 # Run GFA
 def R_input(wcs):
