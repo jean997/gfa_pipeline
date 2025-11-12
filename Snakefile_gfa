@@ -79,6 +79,7 @@ rule refit_gfa:
     input:  inp = refit_input
     output: out = out_dir + "{prefix}_gfa_gfaseed{fs}.ldpruned_{ldstring}.R_{Rstring}.{n}.RDS",
     params: params_file = config["analysis"]["gfa"]["gfa_params"]
+    wildcard_constraints: n = r"\d+"
     script: 'R/5_refit_gfa.R'
 
 # Below is snakemake machinery for checking convergence and re-running if necessary
