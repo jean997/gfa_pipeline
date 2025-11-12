@@ -73,7 +73,7 @@ rule run_gfa:
 def refit_input(wcs):
     n = int(wcs.n)
     oldn = str(n-1)
-    return f'{out_dir}{wcs.prefix}_gfa_gfaseed{wcs.fs}.ldpruned_{wcs.ldsctring}.R_{wcs.Rstring}.{oldn}.RDS'
+    return f'{out_dir}{wcs.prefix}_gfa_gfaseed{wcs.fs}.ldpruned_{wcs.ldstring}.R_{wcs.Rstring}.{oldn}.RDS'
 
 rule refit_gfa:
     input:  inp = refit_input
