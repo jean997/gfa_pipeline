@@ -1,10 +1,13 @@
 library(dplyr)
 library(ieugwasr)
+library(readr)
+library(stringr)
+library(purrr)
 
-source("thin_gwas.R")
+source("R/thin_gwas.R")
 X <- readRDS(snakemake@input[["zmat"]])
 R <- readRDS(snakemake@input[["R"]])
-region_bed <- readr::read_tsv(snakemake@input[["region_file"]]) # should be a bed file
+region_bed <- read_tsv(snakemake@input[["region_file"]]) # should be a bed file
 X_pruned <- readRDS(snakemake@input[["full_pruned"]])
 
 
@@ -30,19 +33,19 @@ is_mvmr <- as.numeric(snakemake@params[["is_mvmr"]])
 
 
 Z_hat <- X %>%
-  select(ends_with(".z")) %>%
+  dplyr::select(ends_with(".z")) %>%
   as.matrix()
 
 pos <- X %>%
-  select(ends_with(".pos")) %>%
+  dplyr::select(ends_with(".pos")) %>%
   as.matrix()
 pos <- pos[,1] # assuming all the gwas are on the same position system, should check this is true eventually
 
-se_hat <- X %>%
+se_beta_hat_orig <- X %>%
   dplyr::select(ends_with(".se")) %>%
   as.matrix()
 
-beta_hat <- Z_hat*se_hat
+beta_hat_orig <- Z_hat*se_beta_hat_orig
 
 nms <- names(X)[grep(".z$", names(X))] %>% str_replace(".z$", "")
 nms2 <- names(X)[grep(".se$", names(X))] %>% str_replace(".se$", "")
@@ -61,10 +64,10 @@ if(is_mvmr == 1){
   psel_full <- 2*pnorm(-abs(zmax))
 }
 # approximation to reduce computational burden, pthresh_thin should be substantially bigger than the selection threshold.
-ix <- which(psel_full < pthresh_thin & snp %in% bim$snp)
+ix <- which(psel_full < pthresh_thin & X$snp %in% bim$snp)
 Z_hat <- Z_hat[ix,]
-beta_hat <- beta_hat[ix,]
-se_hat <- se_hat[ix,]
+beta_hat_orig <- beta_hat_orig[ix,]
+se_beta_hat_orig <- se_beta_hat_orig[ix,]
 pos <- pos[ix]
 snp <- X$snp[ix]
 psel_full <- psel_full[ix]
@@ -95,7 +98,7 @@ snp_region <- findInterval(pos, r$start)
 unique_regions <- unique(snp_region)
 
 R_LD <- lapply(unique_regions, function(i){
-  cat("Region ", i, "of ", max(regions), "\n")
+  cat("Region ", i, "of ", max(unique_regions), "\n")
   snps <- snp[snp_region == i]
   ld_mat <- ieugwasr::ld_matrix(variants = snps,
                                 bfile = ref_path,
@@ -107,10 +110,10 @@ R_LD <- lapply(unique_regions, function(i){
 snps_in_ld_ref <- purrr::map(R_LD, "ld_mat_snps") %>% unlist()
 stopifnot(all(snps_in_ld_ref == snp)) # should match exactly and be in the right order
 
-R_LD <- map(R_LD, "ld_mat") %>% map(function(x){as.matrix(Matrix::nearPD(x)$mat)})
+R_LD <- purrr::map(R_LD, "ld_mat") %>% purrr::map(function(x){as.matrix(Matrix::nearPD(x)$mat)})
 
-beta_hat_orig <- beta_hat
-se_beta_hat_orig <- se_hat
+#beta_hat_orig <- beta_hat
+#se_beta_hat_orig <- se_hat
 
 split_data_chrom <- thin_gwas(beta_hat = beta_hat_orig,
                               se_beta_hat = se_beta_hat_orig,
@@ -132,16 +135,16 @@ for(i in seq(length(split_data_chrom))){
   clump_res <- ieugwasr::ld_clump(dat = data.frame(rsid = snp,
                                                    pval = psel_fold),
                                   bfile = ref_path,
+                                  clump_r2 = r2_thresh,
                                   clump_p = pthresh,
                                   clump_kb = clump_kb,
-                                  plink_bin = genetics.binaRies::get_plink_binary(),
-                                  bfile = ref_path)
+                                  plink_bin = genetics.binaRies::get_plink_binary())
   split_data_chrom[[i]]$snp_info <- data.frame(snp = snp,
                                                psel_fold = psel_fold,
                                                psel_full = psel_full,
                                                ld_pruned = snp %in% clump_res$rsid,
-                                               full_pruned = snp %in% X_full$snp)
-  split_data_chrom[i]$names <- nms
+                                               full_pruned = snp %in% X_pruned$snp)
+  split_data_chrom[[i]]$names <- nms
 }
 
 saveRDS(split_data_chrom, file = out_split)
