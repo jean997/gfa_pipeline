@@ -94,7 +94,7 @@ format_flat_chrom <- function(file, chrom, af_thresh,
 
     if(effect_is_or){
         X$beta <- log(X[[beta_hat_name]])
-        beta_hat <- "beta"
+        beta_hat_name <- "beta"
     }
 
     dat <- gwas_format(X, snp_name, beta_hat_name, se_name,

@@ -73,12 +73,13 @@ rule run_gfa:
 def refit_input(wcs):
     n = int(wcs.n)
     oldn = str(n-1)
-    return f'{out_dir}{wcs.prefix}_gfa_gfaseed{wcs.fs}.ldpruned_{wcs.ldsctring}.R_{wcs.Rstring}.{oldn}.RDS'
+    return f'{out_dir}{wcs.prefix}_gfa_gfaseed{wcs.fs}.ldpruned_{wcs.ldstring}.R_{wcs.Rstring}.{oldn}.RDS'
 
 rule refit_gfa:
     input:  inp = refit_input
     output: out = out_dir + "{prefix}_gfa_gfaseed{fs}.ldpruned_{ldstring}.R_{Rstring}.{n}.RDS",
     params: params_file = config["analysis"]["gfa"]["gfa_params"]
+    wildcard_constraints: n = r"\d+"
     script: 'R/5_refit_gfa.R'
 
 # Below is snakemake machinery for checking convergence and re-running if necessary
