@@ -44,15 +44,26 @@ SS <- X %>%
 nmss <- str_replace(colnames(SS), ".ss$", "")
 o <- match(nmsz, nmss)
 SS <- SS[, o]
-N <- apply(SS, 2, median)
-if(any(is.na(N))){
-  N[is.na(N)] <- gwas_info$pub_sample_size[is.na(N)]
+#N <- apply(SS, 2, median)
+#if(any(is.na(N))){
+#  N[is.na(N)] <- gwas_info$pub_sample_size[is.na(N)]
+#}
+for(i in 1:ncol(SS)){
+  if(any(is.na(SS[,i]))){
+    nm <- colnames(SS)[i]
+    SS[is.na(SS[,i]), i] <- gwas_info$pub_sample_size[gwas_info$name == nm]
+  }
 }
+
+
+colnames(Z_hat) <- nmsz
+colnames(SS) <- nmsz
+
 
 R <- R_ldsc(Z_hat = Z_hat,
               ldscores = X$L2,
               ld_size = M,
-              N = N,
+              N = SS,
               return_gencov = TRUE,
               make_well_conditioned = mwc,
               cond_num = cond_num
