@@ -1,0 +1,117 @@
+# Snakemake pipeline for running MVMR
+#
+#
+# LICENSE: CC0. Do what you want with the code, but it has no guarantees.
+#          https://creativecommons.org/share-your-work/public-domain/cc0/
+#
+#
+# source activate cause_large
+#
+# ./run_snakemake.sh
+#
+# don't forget to update cluster.yaml
+
+
+import pandas as pd
+
+from snakemake.utils import validate
+
+localrules: all
+###### Load configuration file
+configfile: "config_mvmr_cf.yaml"
+#validate(config, schema="schemas/config.schema.yaml")
+
+af_min = config["analysis"]["mvmr"]["af_thresh"]
+sstol_max = "Inf"
+
+cond_num = config["analysis"]["R"]["cond_num"]
+
+# File organization
+data_dir = config["out"]["data_dir"] #where the data is
+out_dir = config["out"]["output_dir"] #where results will go
+
+prefix_dict = config["input"]
+is_mvmr = 1
+include: "common_rules.smk"
+
+### Eventually move into common_rules if mvmr and mvmr_cf pipelines are merged.
+
+rule thin:
+    input: zmat = data_dir + "{prefix}_zmat.{chrom}.RDS",
+           R = R_input,
+           region_file = config["analysis"]["crossfit"]["region_file"],
+           bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed",
+           full_pruned = data_dir + "{prefix}_zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
+    params: ref_path = config["analysis"]["ldprune"]["ref_path"],
+            is_mvmr = is_mvmr,
+            thin_eps1 = config["analysis"]["crossfit"]["thin_eps1"],
+            pthresh_thin = config["analysis"]["crossfit"]["pthresh_thin"],
+            pthresh = 1
+    wildcard_constraints: chrom = r"\d+"
+    resources: mem_mb = 10000
+    output: out_split = data_dir + "{prefix}_zmat_thinned.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_{Rstring}.{chrom}.RDS",
+    script: 'R/2_thin_and_ld_prune_chrom_plink.R'
+
+## Set up MVMR output
+if config["analysis"]["mvmr"]["esmr"]["run"] == True:
+  inp = expand(out_dir + "{prefix}_esmrcf_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = prefix_dict.keys(),
+                        pt = config["analysis"]["mvmr"]["esmr"]["p_thresh"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings)
+else:
+  inp = []
+
+if config["analysis"]["mvmr"]["grapple"]["run"] == True:
+  inp.extend(expand(out_dir + "{prefix}_grapplecf_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = prefix_dict.keys(),
+                        pt = config["analysis"]["mvmr"]["grapple"]["p_thresh"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings))
+
+if config["analysis"]["mvmr"]["bee"]["run"] == True:
+  inp.extend(expand(out_dir + "{prefix}_beecf_{pt}_{plpt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = prefix_dict.keys(),
+                        pt = config["analysis"]["mvmr"]["bee"]["p_thresh"],
+                        plpt = config["analysis"]["mvmr"]["bee"]["pleio_pt"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings))
+
+if config["analysis"]["mvmr"]["ivw"]["run"] == True:
+  inp.extend(expand(out_dir + "{prefix}_ivwcf_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS",
+                        prefix = prefix_dict.keys(),
+                        pt = config["analysis"]["mvmr"]["ivw"]["p_thresh"],
+                        ldstring = ld_strings,
+                        Rstring = R_strings))
+
+
+rule all:
+    input: inp
+
+rule esmr_crossfit:
+    input: data = expand(data_dir + "{{prefix}}_zmat_thinned.ldpruned_{{ldstring}}.R_{{Rstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input
+    params: max_iter = config["analysis"]["mvmr"]["esmr"]["max_iter"]
+    output:  out = out_dir + "{prefix}_esmrcf_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_esmr_crossfit.R'
+
+rule grapple_crossfit:
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input
+    params: max_iter = config["analysis"]["mvmr"]["grapple"]["max_iter"]
+    output:  out = out_dir + "{prefix}_grapple_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_grapple_crossfit.R'
+
+rule bee_crossfit:
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input
+    params: max_iter = config["analysis"]["mvmr"]["bee"]["max_iter"]
+    output:  out = out_dir + "{prefix}_bee_{pt}_{plpt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_bee_crossfit.R'
+
+rule ivw_crossfit:
+    input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
+           R = R_input
+    params: max_iter = config["analysis"]["mvmr"]["esmr"]["max_iter"]
+    output:  out = out_dir + "{prefix}_ivw_{pt}.ldpruned_{ldstring}.R_{Rstring}.RDS"
+    script: 'R/5_run_ivw_crossfit.R'
