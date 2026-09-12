@@ -26,7 +26,6 @@ def R_input(wcs):
     else:
         return f'{data_dir}{wcs.prefix}_R_estimate.R_{wcs.Rstring}.RDS'
     
-    
 
 # This produces one data frame per chromosome with columns for snp info
 # and columns <study>.z, <study>.ss for z-score and sample size of each snp
@@ -64,24 +63,6 @@ rule ld_prune_plink:
     wildcard_constraints: chrom = r"\d+"
     resources: mem_mb = 10000
     script: 'R/2_ld_prune_chrom_plink.R'
-    
-    
-rule thin:
-    input: zmat = data_dir + "{prefix}_zmat.{chrom}.RDS",
-           R = R_input,
-           region_file = ,
-           bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed", 
-           full_pruned = data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS"
-    output: out_split = data_dir + "{{prefix}}_zmat_thinned.ldpruned_{{ldstring}}.R_{Rstring}.{chrom}.RDS",
-    params: ref_path = config["analysis"]["ldprune"]["ref_path"],
-            is_mvmr = is_mvmr,
-            thin_eps1 = config["crossfit"]["thin_eps1"],
-            pthresh_thin = config["crossfit"]["pthresh_thin"],
-            pthresh = 1
-    wildcard_constraints: chrom = r"\d+"
-    resources: mem_mb = 10000
-    script: 'R/2b_thin_and_ld_prune_chrom_plink.R'
-
 
 ## Estimate R
 
