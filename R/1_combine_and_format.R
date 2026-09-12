@@ -52,6 +52,7 @@ fulldat <- map(seq(nrow(info)),   function(i){
                         z_name <- as_name(paste0(n, ".z"))
                         ss_name <- as_name(paste0(n, ".ss"))
                         af_name <- as_name(paste0(n, ".af"))
+                        pos_name <- as_name(paste0(n, ".pos"))
 
                         dat$sample_size[is.na(dat$sample_size)] <- as.numeric(info$pub_sample_size)
                         dat <-dat %>%  dplyr::mutate(Z = beta_hat/se) %>%
@@ -60,7 +61,8 @@ fulldat <- map(seq(nrow(info)),   function(i){
                                               !!z_name := Z,
                                               !!se_name := se,
                                               !!ss_name := sample_size,
-                                              !!af_name := allele_freq)
+                                              !!af_name := allele_freq,
+                                              !!pos_name := pos)
                  }) %>%
        purrr::reduce(full_join, by = c("chrom", "snp", "REF", "ALT"))
 
