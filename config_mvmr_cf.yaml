@@ -21,7 +21,7 @@ analysis:
         r2_thresh: 0.01 # list ok
         clump_kb: 1000 # list ok
         ld_prioritization: ["pvalue"] # list ok,  "pvalue" or "rank"
-        ref_path: "1kg_plink/EUR" # list not ok
+        ref_path: "/nfs/turbo/sph-jvmorr/ld_reference_files/1kg_plink/EUR" # list not ok
     # Crossfitting options
     crossfit:
         region_file: "test_data/fourier_ls-all.bed"
@@ -38,8 +38,8 @@ analysis:
     #     matrix will be projected to the neares positive definite matrix with condition number less than cond_num.
     R:
       type: ["ldsc"] # options are "pt", "ldsc", "none"
-      pthresh: [0.05]
-      l2_dir: "eur_w_ld_chr/" # not a list
+      pthresh: [0.05] # only matters if "pt" is in type
+      l2_dir: "/nfs/turbo/sph-jvmorr/ld_reference_files/ldsc_reference_files/eur_w_ld_chr/" # not a list
       cond_num: 1e3
    # MVMR options.
    # Set run to True for the methods you want to run and False for the methods you don't want to run.
