@@ -105,6 +105,14 @@ R_LD <- lapply(unique_regions, function(i){
                                 plink_bin = genetics.binaRies::get_plink_binary(),
                                 with_alleles = FALSE)
   ld_mat_snps <- rownames(ld_mat)
+  if(!all(ld_mat_snps == snps)){
+      stopifnot(length(ld_mat_snps) == length(snps))
+      stopifnot(all(ld_mat_snps %in% snps))
+      o <- match(snps, ld_mat_snps)
+      ld_mat <- ld_mat[o, o]
+      ld_mat_snps <- rownames(ld_mat)
+      stopifnot(all(ld_mat_snps == snps))
+  }
   return(list("ld_mat" = ld_mat, "ld_mat_snps" = ld_mat_snps))
 })
 snps_in_ld_ref <- purrr::map(R_LD, "ld_mat_snps") %>% unlist()
@@ -114,6 +122,7 @@ R_LD <- purrr::map(R_LD, "ld_mat") %>% purrr::map(function(x){as.matrix(Matrix::
 
 #beta_hat_orig <- beta_hat
 #se_beta_hat_orig <- se_hat
+
 
 split_data_chrom <- thin_gwas(beta_hat = beta_hat_orig,
                               se_beta_hat = se_beta_hat_orig,
