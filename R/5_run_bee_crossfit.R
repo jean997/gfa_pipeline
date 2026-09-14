@@ -11,8 +11,6 @@ R <- readRDS(snakemake@input[["R"]])
 pt <- as.numeric(snakemake@wildcards[["pt"]])
 data_files = unlist(snakemake@input[["data"]])
 max_iter = snakemake@params[["max_iter"]]
-#seed <- snakemake@wildcards[["fs"]]
-#set.seed(seed)
 pl_pt <- as.numeric(snakemake@wildcards[["plpt"]])
 
 
