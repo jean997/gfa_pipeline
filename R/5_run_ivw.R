@@ -63,10 +63,12 @@ hdat <-  list(exposure_beta = beta_hat[ix, 2:p],
               outname = data.frame(id.outcome = nms[1], outcome = nms[1]))
 
 t1 <- system.time(res1 <- mv_multiple(hdat,
-                                      instrument_specific = FALSE))
+                                      instrument_specific = FALSE,
+                                      pval_threshold = 1))
 
 t2 <- system.time(res2 <- mv_multiple(hdat,
-                                      instrument_specific = TRUE))
+                                      instrument_specific = TRUE,
+                                      pval_threshold = 1))
 
 res1$time <- t1
 res2$time <- t2
