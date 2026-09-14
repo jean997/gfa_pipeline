@@ -34,23 +34,6 @@ prefix_dict = config["input"]
 is_mvmr = 1
 include: "common_rules.smk"
 
-### Eventually move into common_rules if mvmr and mvmr_cf pipelines are merged.
-
-rule thin:
-    input: zmat = data_dir + "{prefix}_zmat.{chrom}.RDS",
-           R = R_input,
-           region_file = config["analysis"]["crossfit"]["region_file"],
-           bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed",
-           full_pruned = data_dir + "{prefix}_zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
-    params: ref_path = config["analysis"]["ldprune"]["ref_path"],
-            is_mvmr = is_mvmr,
-            thin_eps1 = config["analysis"]["crossfit"]["thin_eps1"],
-            pthresh_thin = config["analysis"]["crossfit"]["pthresh_thin"],
-            pthresh = 1
-    wildcard_constraints: chrom = r"\d+"
-    resources: mem_mb = 10000
-    output: out_split = data_dir + "{prefix}_zmat_thinned.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_{Rstring}.{chrom}.RDS",
-    script: 'R/2_thin_and_ld_prune_chrom_plink.R'
 
 ## Set up MVMR output
 if config["analysis"]["mvmr"]["esmr"]["run"] == True:
@@ -87,6 +70,25 @@ if config["analysis"]["mvmr"]["ivw"]["run"] == True:
 
 rule all:
     input: inp
+
+### Eventually move into common_rules if mvmr and mvmr_cf pipelines are merged.
+
+rule thin:
+    input: zmat = data_dir + "{prefix}_zmat.{chrom}.RDS",
+           R = R_input,
+           region_file = config["analysis"]["crossfit"]["region_file"],
+           bfile = config["analysis"]["ldprune"]["ref_path"] + ".bed",
+           full_pruned = data_dir + "{prefix}_zmat.ldpruned_r2{r2_thresh}_kb{kb}_{p}.{chrom}.RDS"
+    params: ref_path = config["analysis"]["ldprune"]["ref_path"],
+            is_mvmr = is_mvmr,
+            thin_eps1 = config["analysis"]["crossfit"]["thin_eps1"],
+            pthresh_thin = config["analysis"]["crossfit"]["pthresh_thin"],
+            pthresh = 1
+    wildcard_constraints: chrom = r"\d+"
+    resources: mem_mb = 10000
+    output: out_split = data_dir + "{prefix}_zmat_thinned.ldpruned_r2{r2_thresh}_kb{kb}_{p}.R_{Rstring}.{chrom}.RDS",
+    script: 'R/2_thin_and_ld_prune_chrom_plink.R'
+####################
 
 rule esmr_crossfit:
     input: data = expand(data_dir + "{{prefix}}_zmat_thinned.ldpruned_{{ldstring}}.R_{{Rstring}}.{chrom}.RDS", chrom = range(1, 23)),
