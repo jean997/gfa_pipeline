@@ -11,6 +11,9 @@ snp_table_chrom:
 ld_prune_plink:
     mem: "10G"
 
+thin:
+    mem: "10G"
+
 R_ldsc_full:
     mem: "20G"
 
