@@ -62,7 +62,8 @@ def R_input(wcs):
 
 rule run_gfa:
     input: Z = expand(data_dir + "{{prefix}}_zmat.ldpruned_{{ldstring}}.{chrom}.RDS", chrom = range(1, 23)),
-           R = R_input
+           R = R_input,
+           gwas_info = info_input
     output:  out = out_dir + "{prefix}_gfa_gfaseed{fs}.ldpruned_{ldstring}.R_{Rstring}.1.RDS",
     params: params_file = config["analysis"]["gfa"]["gfa_params"],
             max_snps = config["analysis"]["gfa"]["max_snps"]
