@@ -23,11 +23,19 @@ dat_names <- dat_names[ix]
 o <- match(dat_names, gfafit$names)
 Z_hat <- Z_hat[,o]
 S <- matrix(1, nrow = nrow(Z_hat), ncol = ncol(Z_hat))
-gls_sol <- GFA:::loadings_gls(Z_hat, S, R, gfafit$F_hat)
+
+gls_sol <- gfa_loadings_gls(Z_hat, S, gfafit)
+
 gls_zscores <- gls_sol$L/gls_sol$S
-gls_pvals <- 2*pnorm(-abs(gls_zscores))
+gls_pvals <- gls_sol$P
+
 nf <- ncol(gfafit$F_hat)
+
+
+first_pos_name <- str_subset(names(data), "\\.pos$")[1]
+
 res <- data.frame(cbind(gls_zscores, gls_pvals))
 names(res) <- c(paste0("factor", 1:nf, ".z"), paste0("factor", 1:nf, ".p"))
-res <- bind_cols(data[,c("chrom", "snp", "REF", "ALT")], res)
+res <- bind_cols(data[,c("chrom", "snp", first_pos_name,  "REF", "ALT")], res)
+names(res)[3] <- "pos"
 saveRDS(res, file = out)
