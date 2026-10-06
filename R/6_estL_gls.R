@@ -7,9 +7,8 @@ library(GFA)
 out <- snakemake@output[["out"]]
 data <- readRDS(snakemake@input[["z_file"]])
 gfafit <- readRDS(snakemake@input[["gfa_file"]])
-R <- readRDS(snakemake@input[["R"]])
 stopifnot(all(R$names == gfafit$names))
-R <- R$R
+
 
 Z_hat <- data %>%
   select(ends_with(".z")) %>%

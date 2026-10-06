@@ -142,8 +142,7 @@ rule final_file:
 
 rule gls_loadings_chrom:
     input: z_file = data_dir + "{prefix}_zmat.{chrom}.RDS",
-           gfa_file = out_dir + "{prefix}_gfa_gfaseed{fs}.ldpruned_{ldstring}.R_{Rstring}.final.RDS",
-           R = R_input
+           gfa_file = out_dir + "{prefix}_gfa_gfaseed{fs}.ldpruned_{ldstring}.R_{Rstring}.final.RDS"
     output: out = out_dir + "{prefix}_gls_loadings.gfaseed{fs}.ldpruned_{ldstring}.R_{Rstring}.{chrom}.RDS"
     script: "R/6_estL_gls.R"
 
